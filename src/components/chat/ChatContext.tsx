@@ -23,6 +23,8 @@ interface ChatContextType {
   sendMessage: (content: string, channelId: string, threadParentId?: string, files?: File[]) => void;
   createChannel: (data: { name: string; description: string; type: ChannelType; emoji: string }) => void;
   toggleReaction: (messageId: string, emoji: string) => void;
+  toggleStar: (channelId: string) => void;
+  toggleMute: (channelId: string) => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   searchOpen: boolean;
@@ -254,12 +256,24 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setActiveChannelId(newChannel.id);
   }, [activeWorkspaceId, userId, channels.length, isLive, setActiveChannelId]);
 
+  const toggleStar = useCallback((channelId: string) => {
+    if (!isLive) {
+      setDemoChannelList(prev => prev.map(c => c.id === channelId ? { ...c, is_starred: !c.is_starred } : c));
+    }
+  }, [isLive]);
+
+  const toggleMute = useCallback((channelId: string) => {
+    if (!isLive) {
+      setDemoChannelList(prev => prev.map(c => c.id === channelId ? { ...c, is_muted: !c.is_muted } : c));
+    }
+  }, [isLive]);
+
   return (
     <ChatContext.Provider value={{
       currentUser, users, channels,
       activeChannelId, setActiveChannelId, messages, allMessages,
       threadParentId, setThreadParentId: handleSetThreadParentId, threadReplies,
-      sendMessage, createChannel, toggleReaction,
+      sendMessage, createChannel, toggleReaction, toggleStar, toggleMute,
       searchQuery, setSearchQuery, searchOpen, setSearchOpen,
       sidebarCollapsed, setSidebarCollapsed,
       mobileSidebarOpen, setMobileSidebarOpen,

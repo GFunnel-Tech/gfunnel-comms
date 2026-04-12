@@ -49,6 +49,7 @@ export interface ChatChannel {
   updated_at: string;
   unread_count?: number;
   is_starred?: boolean;
+  is_muted?: boolean;
 }
 
 export interface ContextLink {
