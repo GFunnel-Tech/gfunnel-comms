@@ -6,7 +6,11 @@ import { cn } from '@/lib/utils';
 import { EmojiPicker } from './EmojiPicker';
 import { TypingIndicator } from './TypingIndicator';
 import { MentionAutocomplete } from './MentionAutocomplete';
+import { SlashCommandAutocomplete, SLASH_COMMANDS } from './SlashCommandAutocomplete';
+import { useSlashCommands } from '@/hooks/useSlashCommands';
 import type { ChatUser } from '@/data/chat-types';
+import type { SlashCommand } from './SlashCommandAutocomplete';
+import { toast } from 'sonner';
 
 interface FilePreview {
   file: File;
@@ -21,7 +25,8 @@ interface MessageComposerProps {
 }
 
 export function MessageComposer({ channelId, threadParentId, placeholder }: MessageComposerProps) {
-  const { sendMessage, channels, users } = useChatContext();
+  const { sendMessage, channels, users, currentUser, setRightPanel } = useChatContext();
+  const { execute: executeSlashCommand } = useSlashCommands();
   const [value, setValue] = useState('');
   const [files, setFiles] = useState<FilePreview[]>([]);
   const [showEmoji, setShowEmoji] = useState(false);
@@ -29,6 +34,7 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
   const [isSending, setIsSending] = useState(false);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionStart, setMentionStart] = useState<number>(0);
+  const [slashQuery, setSlashQuery] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounterRef = useRef(0);
@@ -45,7 +51,6 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
     }
   }, [value]);
 
-  // Cleanup file previews on unmount
   useEffect(() => {
     return () => {
       files.forEach(f => { if (f.preview) URL.revokeObjectURL(f.preview); });
@@ -73,6 +78,38 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
     const trimmed = value.trim();
     if ((!trimmed && files.length === 0) || isSending) return;
 
+    // Check for slash command execution
+    const slashMatch = trimmed.match(/^\/(\w+)(?:\s+(.*))?$/s);
+    if (slashMatch) {
+      const cmdName = slashMatch[1].toLowerCase();
+      const cmdArgs = slashMatch[2] || '';
+      const isValidCmd = SLASH_COMMANDS.some(c => c.name === cmdName);
+
+      if (isValidCmd) {
+        setIsSending(true);
+        setValue('');
+        try {
+          const result = await executeSlashCommand({
+            command: cmdName,
+            args: cmdArgs,
+            channelId,
+            userId: currentUser.id,
+            sendMessage,
+            setRightPanel,
+          });
+          if (!result.handled && result.error) {
+            toast.error(result.error);
+          }
+        } catch (e) {
+          console.error('Slash command error:', e);
+          toast.error('Command failed to execute');
+        } finally {
+          setIsSending(false);
+        }
+        return;
+      }
+    }
+
     setIsSending(true);
     try {
       const fileObjects = files.length > 0 ? files.map(f => f.file) : undefined;
@@ -87,15 +124,28 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
     }
   };
 
-  // Detect @mention while typing
+  // Detect @mention and /slash while typing
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     setValue(newValue);
 
     const cursor = e.target.selectionStart;
     const textBeforeCursor = newValue.slice(0, cursor);
-    const atMatch = textBeforeCursor.match(/@(\w*)$/);
 
+    // Check for slash command at start of input
+    if (textBeforeCursor.match(/^\/(\w*)$/) && !newValue.includes(' ')) {
+      const match = textBeforeCursor.match(/^\/(\w*)$/);
+      if (match) {
+        setSlashQuery(match[1]);
+        setMentionQuery(null);
+        return;
+      }
+    } else {
+      setSlashQuery(null);
+    }
+
+    // Check for @mention
+    const atMatch = textBeforeCursor.match(/@(\w*)$/);
     if (atMatch) {
       setMentionQuery(atMatch[1]);
       setMentionStart(cursor - atMatch[0].length);
@@ -112,7 +162,6 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
     setValue(newValue);
     setMentionQuery(null);
 
-    // Restore cursor position
     setTimeout(() => {
       if (textareaRef.current) {
         const pos = before.length + mention.length;
@@ -122,9 +171,17 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
     }, 0);
   };
 
+  const handleSlashSelect = (command: SlashCommand) => {
+    setValue(`/${command.name} `);
+    setSlashQuery(null);
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 0);
+  };
+
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Let MentionAutocomplete handle keyboard when visible
-    if (mentionQuery !== null) return;
+    // Let autocomplete components handle keyboard when visible
+    if (mentionQuery !== null || slashQuery !== null) return;
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -171,7 +228,6 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
     e.target.value = '';
   };
 
-  // Drag and drop handlers
   const handleDragEnter = (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -209,7 +265,6 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      {/* Drag overlay */}
       {isDragging && (
         <div className="absolute inset-0 z-20 mx-4 mb-3 mt-1 rounded-lg border-2 border-dashed border-primary bg-primary/10 flex items-center justify-center pointer-events-none">
           <div className="text-center">
@@ -220,11 +275,9 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
         </div>
       )}
 
-      {/* Typing indicator */}
       <TypingIndicator channelId={channelId} />
 
       <div className="border border-border rounded-lg bg-card overflow-hidden">
-        {/* File previews */}
         {files.length > 0 && (
           <div className="px-3 pt-3 flex flex-wrap gap-2">
             {files.map(f => (
@@ -275,6 +328,12 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
             onSelect={handleMentionSelect}
             onClose={() => setMentionQuery(null)}
             visible={mentionQuery !== null}
+          />
+          <SlashCommandAutocomplete
+            query={slashQuery ?? ''}
+            visible={slashQuery !== null}
+            onSelect={handleSlashSelect}
+            onClose={() => setSlashQuery(null)}
           />
         </div>
 
