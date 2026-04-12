@@ -637,6 +637,7 @@ export type Database = {
         | "linkedin"
         | "sms"
         | "custom_webhook"
+        | "slack"
       presence_status: "online" | "away" | "dnd" | "offline"
     }
     CompositeTypes: {
@@ -784,6 +785,7 @@ export const Constants = {
         "linkedin",
         "sms",
         "custom_webhook",
+        "slack",
       ],
       presence_status: ["online", "away", "dnd", "offline"],
     },
