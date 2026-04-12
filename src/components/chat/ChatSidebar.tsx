@@ -1,4 +1,5 @@
 import { useChatContext } from './ChatContext';
+import { CreateChannelDialog } from './CreateChannelDialog';
 import { Hash, Lock, ChevronDown, ChevronRight, Search, Plus, MessageSquare, Settings, Menu, Star, Megaphone, Zap, ChevronsUpDown } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
