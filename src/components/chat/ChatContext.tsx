@@ -5,7 +5,7 @@ import { useGFunnel } from '@/hooks/useGFunnel';
 import { useSupabaseChat } from '@/hooks/useSupabaseChat';
 import { supabase } from '@/integrations/supabase/client';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { demoWorkspaceConnections, type WorkspaceConnection } from '@/data/workspace-data';
+import { demoWorkspaceConnections, type WorkspaceConnection, type WorkspaceFolder } from '@/data/workspace-data';
 
 type RightPanel = 'none' | 'thread' | 'ai';
 
