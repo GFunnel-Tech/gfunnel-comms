@@ -111,7 +111,7 @@ export function MessageItem({ message, isCompact }: MessageItemProps) {
                   <Zap className="w-2.5 h-2.5" /> Automation
                 </span>
               )}
-              <span className="text-[11px] text-muted-foreground">{time}</span>
+              <span className="text-[11px] text-muted-foreground font-medium">{time}</span>
               {message.is_edited && <span className="text-[10px] text-muted-foreground">(edited)</span>}
               {message.pinned && <Pin className="w-3 h-3 text-primary" />}
             </div>

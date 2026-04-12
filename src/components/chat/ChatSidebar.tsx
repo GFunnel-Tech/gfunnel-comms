@@ -159,7 +159,7 @@ export function ChatSidebar() {
             <div className="mb-2">
               <button className="flex items-center gap-1 px-2 mb-1 w-full" onClick={() => setStarredOpen(!starredOpen)}>
                 {starredOpen ? <ChevronDown className="w-3 h-3 text-sidebar-foreground" /> : <ChevronRight className="w-3 h-3 text-sidebar-foreground" />}
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground">Starred</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/80">Starred</span>
               </button>
               {starredOpen && starredChannels.map(renderChannelRow)}
             </div>
@@ -170,7 +170,7 @@ export function ChatSidebar() {
             <div className="flex items-center justify-between px-2 mb-1">
               <button className="flex items-center gap-1" onClick={() => setChannelsOpen(!channelsOpen)}>
                 {channelsOpen ? <ChevronDown className="w-3 h-3 text-sidebar-foreground" /> : <ChevronRight className="w-3 h-3 text-sidebar-foreground" />}
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground">Channels</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/80">Channels</span>
               </button>
               <Button variant="ghost" size="icon" className="h-5 w-5 text-sidebar-foreground" onClick={() => setCreateOpen(true)}>
                 <Plus className="w-3 h-3" />
@@ -184,7 +184,7 @@ export function ChatSidebar() {
             <div className="flex items-center justify-between px-2 mb-1">
               <button className="flex items-center gap-1" onClick={() => setDmsOpen(!dmsOpen)}>
                 {dmsOpen ? <ChevronDown className="w-3 h-3 text-sidebar-foreground" /> : <ChevronRight className="w-3 h-3 text-sidebar-foreground" />}
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground">Direct Messages</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/80">Direct Messages</span>
               </button>
               <Button variant="ghost" size="icon" className="h-5 w-5 text-sidebar-foreground" onClick={() => setCreateDMOpen(true)}>
                 <Plus className="w-3 h-3" />
