@@ -4,11 +4,12 @@ import { ChannelHeader } from './ChannelHeader';
 import { MessageFeed } from './MessageFeed';
 import { MessageComposer } from './MessageComposer';
 import { ThreadPanel } from './ThreadPanel';
+import { AIPanel } from './AIPanel';
 import { SearchModal } from './SearchModal';
 import { useChatContext } from './ChatContext';
 
 function ChatLayoutInner() {
-  const { activeChannelId, threadParentId } = useChatContext();
+  const { activeChannelId, rightPanel } = useChatContext();
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -21,8 +22,9 @@ function ChatLayoutInner() {
         <MessageComposer channelId={activeChannelId} />
       </div>
 
-      {/* Thread panel */}
-      {threadParentId && <ThreadPanel />}
+      {/* Right panels */}
+      {rightPanel === 'thread' && <ThreadPanel />}
+      {rightPanel === 'ai' && <AIPanel />}
 
       {/* Search */}
       <SearchModal />
