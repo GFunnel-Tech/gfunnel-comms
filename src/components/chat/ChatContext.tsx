@@ -49,6 +49,8 @@ interface ChatContextType {
   removeWorkspaceFromFolder: (folderId: string, workspaceId: string) => void;
   deleteWorkspaceFolder: (folderId: string) => void;
   renameWorkspaceFolder: (folderId: string, newName: string) => void;
+  hoveredMessageId: string | null;
+  setHoveredMessageId: (id: string | null) => void;
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);
@@ -144,6 +146,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   // Demo mode state
   const [demoAllMessages, setDemoAllMessages] = useState<ChatMessage[]>(demoMessages);
   const [demoChannelList, setDemoChannelList] = useState<ChatChannel[]>(demoChannels);
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
 
   // UI state
   const [activeChannelId, setActiveChannelIdRaw] = useState('ch-general');
