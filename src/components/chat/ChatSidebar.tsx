@@ -115,7 +115,7 @@ export function ChatSidebar() {
                   {workspaces.map(ws => (
                     <DropdownMenuItem key={ws.workspace_id}
                       className={cn('gap-2', ws.workspace_id === activeWorkspaceId && 'bg-primary/10 text-primary')}
-                      onClick={() => switchWorkspace(ws.workspace_id)}>
+                      onClick={() => switchWorkspace(ws)}>
                       <span className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
                         style={{ backgroundColor: ws.workspace_color || 'hsl(var(--primary))' }}>
                         {ws.workspace_name.charAt(0)}
