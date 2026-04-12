@@ -102,7 +102,7 @@ export function ChatSidebar() {
   };
 
   return (
-    <div className="w-60 bg-sidebar border-r border-sidebar-border flex flex-col shrink-0">
+    <div className="w-60 bg-sidebar border-r border-sidebar-border flex flex-col shrink-0 shadow-enterprise-sm">
       {/* Header */}
       <div className="p-3 border-b border-sidebar-border">
         <div className="flex items-center justify-between mb-2">

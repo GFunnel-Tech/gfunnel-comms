@@ -12,7 +12,7 @@ export function ChannelHeader() {
   const isDM = channel.type === 'dm' || channel.type === 'group_dm';
 
   return (
-    <div className="h-12 px-4 border-b border-border flex items-center justify-between shrink-0 bg-card/50">
+    <div className="h-12 px-4 border-b border-border flex items-center justify-between shrink-0 bg-card shadow-enterprise-sm">
       <div className="flex items-center gap-2 min-w-0">
         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground md:hidden shrink-0"
           onClick={() => setMobileSidebarOpen(true)}>

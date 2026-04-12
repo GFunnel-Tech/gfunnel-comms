@@ -52,7 +52,7 @@ export function MessageItem({ message, isCompact }: MessageItemProps) {
       isAutomation && 'border-l-2 border-warning bg-warning/5',
     )}>
       {/* Hover action bar */}
-      <div className="absolute -top-3 right-4 hidden group-hover:flex items-center bg-card border border-border rounded-lg shadow-lg z-10">
+      <div className="absolute -top-3 right-4 hidden group-hover:flex items-center bg-card border border-border rounded-lg shadow-enterprise z-10">
         {quickReactions.slice(0, 3).map(emoji => (
           <Button key={emoji} variant="ghost" size="icon" className="h-7 w-7 text-sm hover:bg-muted"
             onClick={() => toggleReaction(message.id, emoji)}>
