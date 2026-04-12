@@ -1,5 +1,6 @@
 import { useChatContext } from './ChatContext';
 import { CreateChannelDialog } from './CreateChannelDialog';
+import { CreateDMDialog } from './CreateDMDialog';
 import { Hash, Lock, ChevronDown, ChevronRight, Search, Plus, MessageSquare, Settings, Menu, Star, Megaphone, Zap, ChevronsUpDown } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -37,12 +38,13 @@ function getChannelIcon(type: string, emoji: string) {
 }
 
 export function ChatSidebar() {
-  const { channels, activeChannelId, setActiveChannelId, currentUser, users, setSearchOpen, sidebarCollapsed, setSidebarCollapsed, setRightPanel, setMobileSidebarOpen, activeWorkspaceName, workspaces, activeWorkspaceId, switchWorkspace, createChannel } = useChatContext();
+  const { channels, activeChannelId, setActiveChannelId, currentUser, users, setSearchOpen, sidebarCollapsed, setSidebarCollapsed, setRightPanel, setMobileSidebarOpen, activeWorkspaceName, workspaces, activeWorkspaceId, switchWorkspace, createChannel, createDM } = useChatContext();
   const showRail = useMediaQuery('(min-width: 900px)');
   const [starredOpen, setStarredOpen] = useState(true);
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
+  const [createDMOpen, setCreateDMOpen] = useState(false);
 
   const starredChannels = channels.filter(c => c.is_starred);
   const publicChannels = channels.filter(c => c.type !== 'dm' && c.type !== 'group_dm' && !c.is_starred);
@@ -184,7 +186,7 @@ export function ChatSidebar() {
                 {dmsOpen ? <ChevronDown className="w-3 h-3 text-sidebar-foreground" /> : <ChevronRight className="w-3 h-3 text-sidebar-foreground" />}
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground">Direct Messages</span>
               </button>
-              <Button variant="ghost" size="icon" className="h-5 w-5 text-sidebar-foreground">
+              <Button variant="ghost" size="icon" className="h-5 w-5 text-sidebar-foreground" onClick={() => setCreateDMOpen(true)}>
                 <Plus className="w-3 h-3" />
               </Button>
             </div>
@@ -243,6 +245,7 @@ export function ChatSidebar() {
         </div>
       </div>
       <CreateChannelDialog open={createOpen} onOpenChange={setCreateOpen} onCreate={createChannel} />
+      <CreateDMDialog open={createDMOpen} onOpenChange={setCreateDMOpen} users={users} currentUserId={currentUser.id} onCreateDM={createDM} />
     </div>
   );
 }
