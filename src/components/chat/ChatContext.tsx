@@ -23,6 +23,8 @@ interface ChatContextType {
   sendMessage: (content: string, channelId: string, threadParentId?: string, files?: File[]) => void;
   createChannel: (data: { name: string; description: string; type: ChannelType; emoji: string }) => void;
   toggleReaction: (messageId: string, emoji: string) => void;
+  toggleStar: (channelId: string) => void;
+  toggleMute: (channelId: string) => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   searchOpen: boolean;
