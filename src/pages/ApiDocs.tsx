@@ -65,7 +65,7 @@ function TryItPanel({ config }: { config: TryItConfig }) {
   // Extract path params like :id, :token
   const paramMatches = config.path.match(/:(\w+)/g) || [];
 
-  const resolvedPath = paramMatches.reduce((p, match) => {
+  const resolvedPath = paramMatches.reduce<string>((p, match) => {
     const key = match.slice(1);
     return p.replace(match, pathParams[key] || match);
   }, config.path);
