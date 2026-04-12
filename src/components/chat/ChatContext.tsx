@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { ChatChannel, ChatMessage, ChatUser } from '@/data/chat-types';
 import { demoChannels, demoMessages, demoUsers, currentDemoUser } from '@/data/chat-demo-data';
 import { useGFunnel } from '@/hooks/useGFunnel';
 import { useSupabaseChat } from '@/hooks/useSupabaseChat';
 import { supabase } from '@/integrations/supabase/client';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 type RightPanel = 'none' | 'thread' | 'ai';
 
@@ -70,7 +71,23 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [threadParentId, setThreadParentId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // Auto-collapse sidebar on medium screens (768-1024px)
+  const isMediumScreen = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
+  const [sidebarCollapsed, setSidebarCollapsedRaw] = useState(false);
+  const userOverrodeRef = useRef(false);
+
+  useEffect(() => {
+    if (!userOverrodeRef.current) {
+      setSidebarCollapsedRaw(isMediumScreen);
+    }
+  }, [isMediumScreen]);
+
+  const setSidebarCollapsed = useCallback((v: boolean) => {
+    userOverrodeRef.current = true;
+    setSidebarCollapsedRaw(v);
+    // Reset override when screen size changes next time
+    setTimeout(() => { userOverrodeRef.current = false; }, 0);
+  }, []);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [rightPanel, setRightPanel] = useState<RightPanel>('none');
 
