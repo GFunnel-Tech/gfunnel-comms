@@ -34,7 +34,7 @@ function getChannelIcon(type: string, emoji: string) {
 }
 
 export function ChatSidebar() {
-  const { channels, activeChannelId, setActiveChannelId, currentUser, users, setSearchOpen, sidebarCollapsed, setSidebarCollapsed, setRightPanel } = useChatContext();
+  const { channels, activeChannelId, setActiveChannelId, currentUser, users, setSearchOpen, sidebarCollapsed, setSidebarCollapsed, setRightPanel, setMobileSidebarOpen } = useChatContext();
   const [starredOpen, setStarredOpen] = useState(true);
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
@@ -53,7 +53,7 @@ export function ChatSidebar() {
         {channels.filter(c => c.type !== 'dm' && c.type !== 'group_dm').map(ch => (
           <Button key={ch.id} variant="ghost" size="icon"
             className={cn('h-8 w-8 relative text-sidebar-foreground', activeChannelId === ch.id && 'bg-primary/10 text-primary')}
-            onClick={() => setActiveChannelId(ch.id)}>
+            onClick={() => { setActiveChannelId(ch.id); setMobileSidebarOpen(false); }}>
             {ch.emoji && ch.emoji !== '#' ? <span className="text-xs">{ch.emoji}</span> : <Hash className="w-3.5 h-3.5" />}
             {(ch.unread_count ?? 0) > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary" />
@@ -76,7 +76,7 @@ export function ChatSidebar() {
             : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground border-l-2 border-transparent',
           (ch.unread_count ?? 0) > 0 && activeChannelId !== ch.id && 'font-semibold text-foreground'
         )}
-        onClick={() => setActiveChannelId(ch.id)}>
+        onClick={() => { setActiveChannelId(ch.id); setMobileSidebarOpen(false); }}>
         {getChannelIcon(ch.type, ch.emoji)}
         <span className="truncate">{ch.name}</span>
         {deptColor && (
@@ -166,7 +166,7 @@ export function ChatSidebar() {
                       : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground border-l-2 border-transparent',
                     (ch.unread_count ?? 0) > 0 && activeChannelId !== ch.id && 'font-semibold text-foreground'
                   )}
-                  onClick={() => setActiveChannelId(ch.id)}>
+                  onClick={() => { setActiveChannelId(ch.id); setMobileSidebarOpen(false); }}>
                   <div className="relative shrink-0">
                     <Avatar className="h-5 w-5">
                       <AvatarFallback className="text-[9px] bg-secondary">{ch.name[0]}</AvatarFallback>

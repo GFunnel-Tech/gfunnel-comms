@@ -9,11 +9,25 @@ import { SearchModal } from './SearchModal';
 import { useChatContext } from './ChatContext';
 
 function ChatLayoutInner() {
-  const { activeChannelId, rightPanel } = useChatContext();
+  const { activeChannelId, rightPanel, mobileSidebarOpen, setMobileSidebarOpen } = useChatContext();
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      <ChatSidebar />
+    <div className="flex h-screen bg-background overflow-hidden relative">
+      {/* Mobile overlay backdrop */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar: hidden on mobile unless open, icon-rail on md, full on lg+ */}
+      <div className={`
+        ${mobileSidebarOpen ? 'fixed inset-y-0 left-0 z-40' : 'hidden'}
+        md:relative md:flex md:z-auto
+      `}>
+        <ChatSidebar />
+      </div>
 
       {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0">
@@ -22,9 +36,17 @@ function ChatLayoutInner() {
         <MessageComposer channelId={activeChannelId} />
       </div>
 
-      {/* Right panels */}
-      {rightPanel === 'thread' && <ThreadPanel />}
-      {rightPanel === 'ai' && <AIPanel />}
+      {/* Right panels - overlay on small screens, inline on large */}
+      {rightPanel === 'thread' && (
+        <div className="fixed inset-y-0 right-0 z-30 w-80 lg:relative lg:z-auto">
+          <ThreadPanel />
+        </div>
+      )}
+      {rightPanel === 'ai' && (
+        <div className="fixed inset-y-0 right-0 z-30 w-80 lg:relative lg:z-auto">
+          <AIPanel />
+        </div>
+      )}
 
       {/* Search */}
       <SearchModal />
