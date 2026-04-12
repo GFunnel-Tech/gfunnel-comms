@@ -19,24 +19,39 @@ let _context: GFunnelContext | null = null;
 const _listeners: Set<ContextListener> = new Set();
 
 export function initGFunnelBridge(moduleSlug: string) {
+  console.info('[GFunnel Bridge] Initializing bridge for module:', moduleSlug);
+  console.info('[GFunnel Bridge] isInsideGFunnel:', isInsideGFunnel());
+
   window.addEventListener('message', (event: MessageEvent) => {
     const data = event.data;
     if (!data?.type) return;
+    if (!data.type.startsWith('gfunnel:')) return;
+
+    console.info('[GFunnel Bridge] ← Received:', data.type, JSON.stringify(data.payload ?? {}).slice(0, 200));
+
     switch (data.type) {
       case 'gfunnel:init':
         _context = data.payload as GFunnelContext;
+        console.info('[GFunnel Bridge] Context set — workspace:', _context.workspace_id, 'user:', _context.user_id, 'hasToken:', !!_context.auth_token);
         _listeners.forEach((fn) => fn(_context!));
         window.parent.postMessage({ type: 'module:ready', payload: { module_slug: moduleSlug } }, '*');
+        console.info('[GFunnel Bridge] → Sent: module:ready (post-init)');
         break;
       case 'gfunnel:theme':
+        console.info('[GFunnel Bridge] Theme changed to:', data.payload?.theme);
         if (_context) { _context.theme = data.payload.theme; _listeners.forEach((fn) => fn(_context!)); }
         break;
       case 'gfunnel:config':
+        console.info('[GFunnel Bridge] Config update:', JSON.stringify(data.payload?.config ?? {}).slice(0, 200));
         if (_context) { _context.config = { ..._context.config, ...data.payload.config }; _listeners.forEach((fn) => fn(_context!)); }
         break;
+      default:
+        console.warn('[GFunnel Bridge] Unhandled gfunnel event:', data.type);
     }
   });
+
   window.parent.postMessage({ type: 'module:ready', payload: { module_slug: moduleSlug } }, '*');
+  console.info('[GFunnel Bridge] → Sent: module:ready (initial)');
 }
 
 export function getGFunnelContext(): GFunnelContext | null { return _context; }
