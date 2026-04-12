@@ -170,7 +170,7 @@ export function ChatSidebar() {
                 {channelsOpen ? <ChevronDown className="w-3 h-3 text-sidebar-foreground" /> : <ChevronRight className="w-3 h-3 text-sidebar-foreground" />}
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground">Channels</span>
               </button>
-              <Button variant="ghost" size="icon" className="h-5 w-5 text-sidebar-foreground">
+              <Button variant="ghost" size="icon" className="h-5 w-5 text-sidebar-foreground" onClick={() => setCreateOpen(true)}>
                 <Plus className="w-3 h-3" />
               </Button>
             </div>
