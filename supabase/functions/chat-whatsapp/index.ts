@@ -323,7 +323,7 @@ Deno.serve(async (req) => {
 
     // Verify signature in production
     const APP_SECRET = Deno.env.get("WHATSAPP_APP_SECRET");
-    if (APP_SECRET && !verifySignature(bodyText, signature)) {
+    if (APP_SECRET && !(await verifySignature(bodyText, signature))) {
       console.error("Invalid WhatsApp webhook signature");
       return json({ error: "Invalid signature" }, 401);
     }
