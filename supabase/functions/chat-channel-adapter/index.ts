@@ -247,11 +247,112 @@ const telegramAdapter: ProviderAdapter = {
   },
 };
 
+// ─── Slack Adapter ───
+
+const slackAdapter: ProviderAdapter = {
+  provider: "slack",
+
+  handleVerification(_url: URL, _integration: IntegrationRow | null) {
+    // Slack uses POST url_verification, not GET — handled in the main POST flow
+    return null;
+  },
+
+  async verifyWebhook(req: Request, body: string, integration: IntegrationRow | null) {
+    const signingSecret = Deno.env.get(
+      integration?.credentials_secret_name
+        ? `${integration.credentials_secret_name}_SIGNING_SECRET`
+        : "SLACK_SIGNING_SECRET"
+    );
+    if (!signingSecret) return true; // skip if not configured
+
+    const timestamp = req.headers.get("x-slack-request-timestamp");
+    const signature = req.headers.get("x-slack-signature");
+    if (!timestamp || !signature) return false;
+
+    // Reject requests older than 5 minutes
+    const now = Math.floor(Date.now() / 1000);
+    if (Math.abs(now - parseInt(timestamp)) > 300) return false;
+
+    const sigBasestring = `v0:${timestamp}:${body}`;
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw", encoder.encode(signingSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+    );
+    const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(sigBasestring));
+    const computed = "v0=" + Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, "0")).join("");
+    return signature === computed;
+  },
+
+  resolveIntegrationKey(body: any): string | null {
+    // Use team_id to resolve which workspace integration
+    return body?.team_id || body?.event?.team || null;
+  },
+
+  parseIncoming(body: any): NormalizedMessage[] {
+    const messages: NormalizedMessage[] = [];
+    const event = body.event;
+    if (!event) return messages;
+
+    // Only process actual user messages (not bot messages, not subtypes like channel_join)
+    if (event.type !== "message" || event.subtype || event.bot_id) return messages;
+
+    const senderId = event.user || "unknown";
+    const content = event.text || "";
+    if (!content) return messages;
+
+    let msgType: "text" | "image" | "file" = "text";
+
+    // Check for file attachments
+    if (event.files?.length) {
+      const file = event.files[0];
+      if (file.mimetype?.startsWith("image/")) {
+        msgType = "image";
+      } else {
+        msgType = "file";
+      }
+    }
+
+    messages.push({
+      sender_id: senderId,
+      sender_name: senderId, // Will be resolved to display name if needed
+      content,
+      type: msgType,
+      raw_metadata: {
+        slack_team_id: body.team_id,
+        slack_channel_id: event.channel,
+        slack_user_id: event.user,
+        slack_ts: event.ts,
+        slack_thread_ts: event.thread_ts || null,
+        slack_channel_type: event.channel_type,
+        slack_event_id: body.event_id,
+        slack_files: event.files?.map((f: any) => ({ name: f.name, mimetype: f.mimetype, url: f.url_private })) || null,
+      },
+    });
+    return messages;
+  },
+
+  async sendMessage(integration: IntegrationRow, recipientId: string, content: string) {
+    const botToken = Deno.env.get(
+      integration.credentials_secret_name || "SLACK_BOT_TOKEN"
+    );
+    if (!botToken) { console.error("Slack bot token not found"); return; }
+
+    const res = await fetch("https://slack.com/api/chat.postMessage", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${botToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ channel: recipientId, text: content }),
+    });
+    const data = await res.json();
+    if (!data.ok) console.error("Slack send failed:", data.error);
+  },
+};
+
 // ─── Adapter Registry ───
 
 const adapters: Record<string, ProviderAdapter> = {
   whatsapp: whatsappAdapter,
   telegram: telegramAdapter,
+  slack: slackAdapter,
 };
 
 // ─── Router: Find or Create Contact + Channel ───
