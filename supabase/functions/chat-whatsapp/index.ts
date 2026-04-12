@@ -28,12 +28,17 @@ function handleVerification(url: URL): Response {
 }
 
 // ─── Signature Verification ───
-function verifySignature(body: string, signature: string | null): boolean {
+async function verifySignature(body: string, signature: string | null): Promise<boolean> {
   const APP_SECRET = Deno.env.get("WHATSAPP_APP_SECRET");
   if (!APP_SECRET || !signature) return false;
 
   const expectedSig = signature.replace("sha256=", "");
-  const computedSig = hmac("sha256", APP_SECRET, body, "utf8", "hex") as string;
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw", encoder.encode(APP_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(body));
+  const computedSig = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, "0")).join("");
   return expectedSig === computedSig;
 }
 
