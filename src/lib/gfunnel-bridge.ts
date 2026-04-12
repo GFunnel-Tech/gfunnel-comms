@@ -18,7 +18,10 @@ type ContextListener = (ctx: GFunnelContext) => void;
 let _context: GFunnelContext | null = null;
 const _listeners: Set<ContextListener> = new Set();
 
+let _initialized = false;
 export function initGFunnelBridge(moduleSlug: string) {
+  if (_initialized) { console.info('[GFunnel Bridge] Already initialized, skipping'); return; }
+  _initialized = true;
   console.info('[GFunnel Bridge] Initializing bridge for module:', moduleSlug);
   console.info('[GFunnel Bridge] isInsideGFunnel:', isInsideGFunnel());
 
