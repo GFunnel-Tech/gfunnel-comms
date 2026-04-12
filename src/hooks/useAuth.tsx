@@ -8,6 +8,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isEmbedded: boolean;
+  bridgeTimedOut: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   isEmbedded: false,
+  bridgeTimedOut: false,
   signOut: async () => {},
 });
 
