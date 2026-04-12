@@ -8,6 +8,7 @@ import { MessageComposer } from './MessageComposer';
 import { ThreadPanel } from './ThreadPanel';
 import { AIPanel } from './AIPanel';
 import { SearchModal } from './SearchModal';
+import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog';
 import { WorkspaceRail } from './WorkspaceRail';
 import { useChatContext } from './ChatContext';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
@@ -92,6 +93,7 @@ function ChatLayoutInner() {
         )}
 
         <SearchModal />
+        <KeyboardShortcutsDialog />
       </div>
     </ActiveTabContext.Provider>
   );
