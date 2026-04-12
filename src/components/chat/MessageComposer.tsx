@@ -277,7 +277,7 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
 
       <TypingIndicator channelId={channelId} />
 
-      <div className="border border-border rounded-lg bg-card overflow-hidden">
+      <div className="border border-border rounded-lg bg-card overflow-hidden shadow-enterprise-sm">
         {files.length > 0 && (
           <div className="px-3 pt-3 flex flex-wrap gap-2">
             {files.map(f => (
