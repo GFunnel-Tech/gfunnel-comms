@@ -5,6 +5,7 @@ import { useGFunnel } from '@/hooks/useGFunnel';
 import { useSupabaseChat } from '@/hooks/useSupabaseChat';
 import { supabase } from '@/integrations/supabase/client';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { demoWorkspaceConnections, type WorkspaceConnection } from '@/data/workspace-data';
 
 type RightPanel = 'none' | 'thread' | 'ai';
 
@@ -33,6 +34,11 @@ interface ChatContextType {
   setRightPanel: (p: RightPanel) => void;
   isLive: boolean;
   loading: boolean;
+  // Workspace
+  workspaces: WorkspaceConnection[];
+  activeWorkspaceId: string;
+  activeWorkspaceName: string;
+  switchWorkspace: (ws: WorkspaceConnection) => void;
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);
@@ -46,8 +52,6 @@ export function useChatContext() {
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const gfunnel = useGFunnel('chat');
 
-  // Determine if we're in live Supabase mode:
-  // Either embedded with auth token, or user is authenticated via Supabase directly
   const [supabaseUser, setSupabaseUser] = useState<{ id: string; email?: string } | null>(null);
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -63,20 +67,21 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Set Supabase session from GFunnel auth token
   useEffect(() => {
     if (gfunnel.authToken) {
-      supabase.auth.setSession({
-        access_token: gfunnel.authToken,
-        refresh_token: '',
-      });
+      supabase.auth.setSession({ access_token: gfunnel.authToken, refresh_token: '' });
     }
   }, [gfunnel.authToken]);
 
   const isEmbeddedLive = gfunnel.isEmbedded && !!gfunnel.authToken;
   const isLive = isEmbeddedLive || !!supabaseUser;
 
-  const workspaceId = gfunnel.workspaceId ?? 'default-workspace';
+  // Workspace state
+  const [workspaces] = useState<WorkspaceConnection[]>(demoWorkspaceConnections);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState('demo-workspace');
+  const activeWorkspaceName = workspaces.find(w => w.workspace_id === activeWorkspaceId)?.workspace_name ?? 'Workspace';
+
+  const workspaceId = isLive ? (gfunnel.workspaceId ?? 'default-workspace') : activeWorkspaceId;
   const userId = isEmbeddedLive
     ? (gfunnel.userId ?? supabaseUser?.id ?? currentDemoUser.id)
     : (supabaseUser?.id ?? currentDemoUser.id);
@@ -87,7 +92,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [demoAllMessages, setDemoAllMessages] = useState<ChatMessage[]>(demoMessages);
   const [demoChannelList] = useState<ChatChannel[]>(demoChannels);
 
-  // Shared UI state
+  // UI state
   const [activeChannelId, setActiveChannelIdRaw] = useState('ch-general');
   const [threadParentId, setThreadParentId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,9 +102,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const userOverrodeRef = useRef(false);
 
   useEffect(() => {
-    if (!userOverrodeRef.current) {
-      setSidebarCollapsedRaw(isMediumScreen);
-    }
+    if (!userOverrodeRef.current) setSidebarCollapsedRaw(isMediumScreen);
   }, [isMediumScreen]);
 
   const setSidebarCollapsed = useCallback((v: boolean) => {
@@ -113,57 +116,56 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const channels = isLive ? sb.channels : demoChannelList;
   const allMessages = isLive ? sb.allMessages : demoAllMessages;
 
-  // When switching channels in live mode, load messages
   const setActiveChannelId = useCallback((id: string) => {
     setActiveChannelIdRaw(id);
     if (isLive) sb.loadMessages(id);
   }, [isLive, sb.loadMessages]);
 
-  // Set initial active channel
   useEffect(() => {
     if (channels.length > 0 && !channels.find(c => c.id === activeChannelId)) {
       setActiveChannelIdRaw(channels[0].id);
     }
   }, [channels]);
 
-  // Load messages for active channel in live mode
   useEffect(() => {
-    if (isLive && activeChannelId) {
-      sb.loadMessages(activeChannelId);
-    }
+    if (isLive && activeChannelId) sb.loadMessages(activeChannelId);
   }, [isLive, activeChannelId]);
 
-  // Set presence when live
   useEffect(() => {
     if (isLive) {
       sb.updatePresence('online');
       const interval = setInterval(() => sb.updatePresence('online'), 30000);
-      return () => {
-        clearInterval(interval);
-        sb.updatePresence('offline');
-      };
+      return () => { clearInterval(interval); sb.updatePresence('offline'); };
     }
   }, [isLive]);
 
-  // Current user
+  // Workspace switching
+  const switchWorkspace = useCallback((ws: WorkspaceConnection) => {
+    if (ws.workspace_id === activeWorkspaceId) return;
+    // Save current state
+    localStorage.setItem(`chat_state_${activeWorkspaceId}`, JSON.stringify({
+      activeChannelId,
+    }));
+    setActiveWorkspaceId(ws.workspace_id);
+    // Restore state for target workspace
+    const saved = localStorage.getItem(`chat_state_${ws.workspace_id}`);
+    if (saved) {
+      try {
+        const { activeChannelId: savedChannel } = JSON.parse(saved);
+        if (savedChannel) setActiveChannelIdRaw(savedChannel);
+      } catch {}
+    } else {
+      // Will reset to first channel via the effect above
+      setActiveChannelIdRaw('');
+    }
+    setThreadParentId(null);
+    setRightPanel('none');
+  }, [activeWorkspaceId, activeChannelId]);
+
   const currentUser: ChatUser = isEmbeddedLive
-    ? {
-        id: userId,
-        display_name: gfunnel.userDisplayName || 'You',
-        avatar_url: gfunnel.userAvatarUrl,
-        email: gfunnel.userEmail || '',
-        status: 'online',
-        role: gfunnel.userRole,
-      }
+    ? { id: userId, display_name: gfunnel.userDisplayName || 'You', avatar_url: gfunnel.userAvatarUrl, email: gfunnel.userEmail || '', status: 'online', role: gfunnel.userRole }
     : supabaseUser
-    ? {
-        id: supabaseUser.id,
-        display_name: supabaseUser.email?.split('@')[0] || 'You',
-        avatar_url: null,
-        email: supabaseUser.email || '',
-        status: 'online',
-        role: 'member',
-      }
+    ? { id: supabaseUser.id, display_name: supabaseUser.email?.split('@')[0] || 'You', avatar_url: null, email: supabaseUser.email || '', status: 'online', role: 'member' }
     : currentDemoUser;
 
   const users = isLive ? [currentUser] : demoUsers;
@@ -187,16 +189,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setRightPanel(id ? 'thread' : 'none');
   }, []);
 
-  // Send message - live or demo, now with file support
   const sendMessage = useCallback((content: string, channelId: string, parentId?: string, files?: File[]) => {
-    if (isLive) {
-      sb.sendMessage(content, channelId, parentId, files);
-      return;
-    }
-    // Demo mode
+    if (isLive) { sb.sendMessage(content, channelId, parentId, files); return; }
     const now = new Date().toISOString();
     const newMsg: ChatMessage = {
-      id: `msg-${Date.now()}`, workspace_id: 'demo-workspace', channel_id: channelId,
+      id: `msg-${Date.now()}`, workspace_id: activeWorkspaceId, channel_id: channelId,
       user_id: currentDemoUser.id, user_display_name: currentDemoUser.display_name,
       user_avatar_url: currentDemoUser.avatar_url, content, type: 'text', source: 'user',
       thread_parent_id: parentId, thread_reply_count: 0, thread_participant_ids: [],
@@ -208,32 +205,23 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       const updated = [...prev, newMsg];
       if (parentId) {
         return updated.map(m => m.id === parentId ? {
-          ...m,
-          thread_reply_count: m.thread_reply_count + 1,
-          thread_last_reply_at: now,
+          ...m, thread_reply_count: m.thread_reply_count + 1, thread_last_reply_at: now,
           thread_participant_ids: [...new Set([...m.thread_participant_ids, currentDemoUser.id])],
         } : m);
       }
       return updated;
     });
-  }, [isLive, sb.sendMessage]);
+  }, [isLive, sb.sendMessage, activeWorkspaceId]);
 
-  // Toggle reaction - live or demo
   const toggleReaction = useCallback((messageId: string, emoji: string) => {
-    if (isLive) {
-      sb.toggleReaction(messageId, emoji);
-      return;
-    }
+    if (isLive) { sb.toggleReaction(messageId, emoji); return; }
     setDemoAllMessages(prev => prev.map(m => {
       if (m.id !== messageId) return m;
       const current = m.reactions[emoji] || [];
       const hasReacted = current.includes(currentDemoUser.id);
-      const updated = hasReacted
-        ? current.filter(id => id !== currentDemoUser.id)
-        : [...current, currentDemoUser.id];
+      const updated = hasReacted ? current.filter(id => id !== currentDemoUser.id) : [...current, currentDemoUser.id];
       const reactions = { ...m.reactions };
-      if (updated.length === 0) delete reactions[emoji];
-      else reactions[emoji] = updated;
+      if (updated.length === 0) delete reactions[emoji]; else reactions[emoji] = updated;
       return { ...m, reactions };
     }));
   }, [isLive, sb.toggleReaction]);
@@ -248,8 +236,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       sidebarCollapsed, setSidebarCollapsed,
       mobileSidebarOpen, setMobileSidebarOpen,
       rightPanel, setRightPanel,
-      isLive,
-      loading: isLive ? sb.loading : false,
+      isLive, loading: isLive ? sb.loading : false,
+      workspaces, activeWorkspaceId, activeWorkspaceName, switchWorkspace,
     }}>
       {children}
     </ChatContext.Provider>

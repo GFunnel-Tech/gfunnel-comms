@@ -7,12 +7,18 @@ import { MessageComposer } from './MessageComposer';
 import { ThreadPanel } from './ThreadPanel';
 import { AIPanel } from './AIPanel';
 import { SearchModal } from './SearchModal';
+import { WorkspaceRail } from './WorkspaceRail';
 import { useChatContext } from './ChatContext';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 function ChatLayoutInner() {
-  const { activeChannelId, rightPanel, mobileSidebarOpen, setMobileSidebarOpen, setRightPanel } = useChatContext();
+  const {
+    activeChannelId, rightPanel, mobileSidebarOpen, setMobileSidebarOpen, setRightPanel,
+    workspaces, activeWorkspaceId, switchWorkspace,
+  } = useChatContext();
   const containerRef = useRef<HTMLDivElement>(null);
+  const showRail = useMediaQuery('(min-width: 900px)');
 
   useSwipeGesture(containerRef, {
     onSwipeRight: () => setMobileSidebarOpen(true),
@@ -25,6 +31,15 @@ function ChatLayoutInner() {
 
   return (
     <div ref={containerRef} className="flex h-screen bg-background overflow-hidden relative">
+      {/* Workspace Rail — visible on wide screens */}
+      {showRail && (
+        <WorkspaceRail
+          workspaces={workspaces}
+          activeWorkspaceId={activeWorkspaceId}
+          onSwitch={switchWorkspace}
+        />
+      )}
+
       {/* Mobile overlay backdrop */}
       {mobileSidebarOpen && (
         <div
@@ -33,7 +48,7 @@ function ChatLayoutInner() {
         />
       )}
 
-      {/* Sidebar: hidden on mobile unless open, icon-rail on md, full on lg+ */}
+      {/* Sidebar */}
       <div className={`
         ${mobileSidebarOpen ? 'fixed inset-y-0 left-0 z-40' : 'hidden'}
         md:relative md:flex md:z-auto
@@ -48,7 +63,7 @@ function ChatLayoutInner() {
         <MessageComposer channelId={activeChannelId} />
       </div>
 
-      {/* Right panels - overlay on small screens, inline on large */}
+      {/* Right panels */}
       {rightPanel === 'thread' && (
         <div className="fixed inset-y-0 right-0 z-30 w-80 lg:relative lg:z-auto">
           <ThreadPanel />
@@ -60,7 +75,6 @@ function ChatLayoutInner() {
         </div>
       )}
 
-      {/* Search */}
       <SearchModal />
     </div>
   );
