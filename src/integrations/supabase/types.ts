@@ -14,7 +14,266 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_channels: {
+        Row: {
+          created_at: string
+          created_by: string
+          department: string | null
+          description: string | null
+          emoji: string | null
+          id: string
+          is_archived: boolean
+          is_read_only: boolean
+          last_message_at: string | null
+          last_message_preview: string | null
+          linked_module_label: string | null
+          linked_module_slug: string | null
+          message_count: number
+          name: string
+          pinned_message_ids: string[] | null
+          sort_order: number
+          topic: string | null
+          type: Database["public"]["Enums"]["channel_type"]
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          department?: string | null
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          is_archived?: boolean
+          is_read_only?: boolean
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          linked_module_label?: string | null
+          linked_module_slug?: string | null
+          message_count?: number
+          name: string
+          pinned_message_ids?: string[] | null
+          sort_order?: number
+          topic?: string | null
+          type?: Database["public"]["Enums"]["channel_type"]
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          department?: string | null
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          is_archived?: boolean
+          is_read_only?: boolean
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          linked_module_label?: string | null
+          linked_module_slug?: string | null
+          message_count?: number
+          name?: string
+          pinned_message_ids?: string[] | null
+          sort_order?: number
+          topic?: string | null
+          type?: Database["public"]["Enums"]["channel_type"]
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
+      chat_members: {
+        Row: {
+          channel_id: string
+          id: string
+          is_starred: boolean
+          joined_at: string
+          last_read_at: string | null
+          notifications_muted: boolean
+          role: string
+          unread_count: number
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          id?: string
+          is_starred?: boolean
+          joined_at?: string
+          last_read_at?: string | null
+          notifications_muted?: boolean
+          role?: string
+          unread_count?: number
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          id?: string
+          is_starred?: boolean
+          joined_at?: string
+          last_read_at?: string | null
+          notifications_muted?: boolean
+          role?: string
+          unread_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_members_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          channel_id: string
+          channel_mentions: string[] | null
+          content: string
+          content_html: string | null
+          context_links: Json
+          created_at: string
+          deleted_at: string | null
+          edited_at: string | null
+          file_name: string | null
+          file_size: number | null
+          file_thumbnail_url: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          is_deleted: boolean
+          is_edited: boolean
+          mentions: string[] | null
+          metadata: Json
+          pinned: boolean
+          pinned_at: string | null
+          pinned_by: string | null
+          reactions: Json
+          source: Database["public"]["Enums"]["message_source"]
+          thread_last_reply_at: string | null
+          thread_parent_id: string | null
+          thread_participant_ids: string[] | null
+          thread_reply_count: number
+          type: Database["public"]["Enums"]["message_type"]
+          updated_at: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          channel_id: string
+          channel_mentions?: string[] | null
+          content: string
+          content_html?: string | null
+          context_links?: Json
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_thumbnail_url?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_deleted?: boolean
+          is_edited?: boolean
+          mentions?: string[] | null
+          metadata?: Json
+          pinned?: boolean
+          pinned_at?: string | null
+          pinned_by?: string | null
+          reactions?: Json
+          source?: Database["public"]["Enums"]["message_source"]
+          thread_last_reply_at?: string | null
+          thread_parent_id?: string | null
+          thread_participant_ids?: string[] | null
+          thread_reply_count?: number
+          type?: Database["public"]["Enums"]["message_type"]
+          updated_at?: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          channel_id?: string
+          channel_mentions?: string[] | null
+          content?: string
+          content_html?: string | null
+          context_links?: Json
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_thumbnail_url?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_deleted?: boolean
+          is_edited?: boolean
+          mentions?: string[] | null
+          metadata?: Json
+          pinned?: boolean
+          pinned_at?: string | null
+          pinned_by?: string | null
+          reactions?: Json
+          source?: Database["public"]["Enums"]["message_source"]
+          thread_last_reply_at?: string | null
+          thread_parent_id?: string | null
+          thread_participant_ids?: string[] | null
+          thread_reply_count?: number
+          type?: Database["public"]["Enums"]["message_type"]
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_thread_parent_id_fkey"
+            columns: ["thread_parent_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_presence: {
+        Row: {
+          id: string
+          last_seen_at: string
+          status: Database["public"]["Enums"]["presence_status"]
+          status_emoji: string | null
+          status_text: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          last_seen_at?: string
+          status?: Database["public"]["Enums"]["presence_status"]
+          status_emoji?: string | null
+          status_text?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          last_seen_at?: string
+          status?: Database["public"]["Enums"]["presence_status"]
+          status_emoji?: string | null
+          status_text?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +282,17 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      channel_type:
+        | "public"
+        | "private"
+        | "dm"
+        | "group_dm"
+        | "department"
+        | "announcement"
+        | "automation"
+      message_source: "user" | "ai" | "n8n" | "system"
+      message_type: "text" | "file" | "image" | "system" | "ai" | "automation"
+      presence_status: "online" | "away" | "dnd" | "offline"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +419,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      channel_type: [
+        "public",
+        "private",
+        "dm",
+        "group_dm",
+        "department",
+        "announcement",
+        "automation",
+      ],
+      message_source: ["user", "ai", "n8n", "system"],
+      message_type: ["text", "file", "image", "system", "ai", "automation"],
+      presence_status: ["online", "away", "dnd", "offline"],
+    },
   },
 } as const
