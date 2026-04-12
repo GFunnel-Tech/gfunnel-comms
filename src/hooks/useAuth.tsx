@@ -24,6 +24,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isEmbedded] = useState(() => isInsideGFunnel());
 
+  const [bridgeTimedOut, setBridgeTimedOut] = useState(false);
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
@@ -34,36 +36,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      // If embedded and no session yet, wait for bridge token before clearing loading
       if (!session && isEmbedded) return;
       setLoading(false);
     });
 
-    // Auto-login via GFunnel bridge when embedded
     if (isEmbedded) {
+      let resolved = false;
+      const timeout = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          console.warn('[GFunnel] Bridge auth_token not received within 5s');
+          setBridgeTimedOut(true);
+          setLoading(false);
+        }
+      }, 5000);
+
       const unsubscribe = onContextChange(async (ctx) => {
+        resolved = true;
+        clearTimeout(timeout);
+        setBridgeTimedOut(false);
         if (ctx.auth_token) {
           try {
-            // The parent GFunnel platform provides a valid Supabase session token
             const { error } = await supabase.auth.setSession({
               access_token: ctx.auth_token,
-              refresh_token: '', // GFunnel manages token refresh
+              refresh_token: '',
             });
             if (error) {
               console.error('[GFunnel] Auto-login failed:', error.message);
+              setBridgeTimedOut(true);
               setLoading(false);
             }
-            // onAuthStateChange will handle setting session + loading=false
           } catch (err) {
             console.error('[GFunnel] Auto-login error:', err);
+            setBridgeTimedOut(true);
             setLoading(false);
           }
         } else {
-          // No auth token from parent — stop loading
           setLoading(false);
         }
       });
+
       return () => {
+        clearTimeout(timeout);
         subscription.unsubscribe();
         unsubscribe();
       };
