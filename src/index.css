@@ -59,6 +59,9 @@
     --dept-support: 0 84% 60%;
     --dept-ai: 38 92% 50%;
     --dept-legal: 215 16% 47%;
+
+    --rail-background: 240 20% 5%;
+    --rail-foreground: 220 20% 70%;
   }
 }
 
