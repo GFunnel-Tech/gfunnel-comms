@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { ChatProvider } from './ChatContext';
 import { ChatSidebar } from './ChatSidebar';
 import { ChannelHeader } from './ChannelHeader';
@@ -7,12 +8,23 @@ import { ThreadPanel } from './ThreadPanel';
 import { AIPanel } from './AIPanel';
 import { SearchModal } from './SearchModal';
 import { useChatContext } from './ChatContext';
+import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 
 function ChatLayoutInner() {
-  const { activeChannelId, rightPanel, mobileSidebarOpen, setMobileSidebarOpen } = useChatContext();
+  const { activeChannelId, rightPanel, mobileSidebarOpen, setMobileSidebarOpen, setRightPanel } = useChatContext();
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useSwipeGesture(containerRef, {
+    onSwipeRight: () => setMobileSidebarOpen(true),
+    onSwipeLeft: () => {
+      if (mobileSidebarOpen) setMobileSidebarOpen(false);
+    },
+    threshold: 50,
+    edgeWidth: 30,
+  });
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden relative">
+    <div ref={containerRef} className="flex h-screen bg-background overflow-hidden relative">
       {/* Mobile overlay backdrop */}
       {mobileSidebarOpen && (
         <div
