@@ -5,7 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { toast } from 'sonner';
 
 export function ChannelHeader() {
-  const { channels, activeChannelId, setRightPanel, rightPanel, sidebarCollapsed, setSidebarCollapsed, setMobileSidebarOpen } = useChatContext();
+  const { channels, activeChannelId, setRightPanel, rightPanel, sidebarCollapsed, setSidebarCollapsed, setMobileSidebarOpen, toggleStar, toggleMute } = useChatContext();
   const channel = channels.find(c => c.id === activeChannelId);
   if (!channel) return null;
 
@@ -14,12 +14,10 @@ export function ChannelHeader() {
   return (
     <div className="h-12 px-4 border-b border-border flex items-center justify-between shrink-0 bg-card/50">
       <div className="flex items-center gap-2 min-w-0">
-        {/* Mobile hamburger */}
         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground md:hidden shrink-0"
           onClick={() => setMobileSidebarOpen(true)}>
           <Menu className="w-4 h-4" />
         </Button>
-        {/* Desktop collapse toggle when sidebar is collapsed */}
         {sidebarCollapsed && (
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hidden md:flex shrink-0"
             onClick={() => setSidebarCollapsed(false)}>
@@ -36,6 +34,7 @@ export function ChannelHeader() {
             : <Hash className="w-4 h-4 text-muted-foreground shrink-0" />
         )}
         <h2 className="font-heading font-semibold text-foreground text-sm truncate">{channel.name}</h2>
+        {channel.is_muted && <BellOff className="w-3 h-3 text-muted-foreground shrink-0" />}
         {channel.topic && (
           <span className="text-xs text-muted-foreground truncate hidden sm:inline">
             <span className="text-border mx-1">|</span>
@@ -66,7 +65,6 @@ export function ChannelHeader() {
           <Users className="w-4 h-4" />
         </Button>
 
-        {/* More menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
@@ -74,21 +72,14 @@ export function ChannelHeader() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuItem className="gap-2 text-sm" onClick={() => toast.info('Notifications toggled')}>
-              <BellOff className="w-4 h-4" />
-              Mute channel
+            <DropdownMenuItem className="gap-2 text-sm" onClick={() => { toggleMute(channel.id); toast.success(channel.is_muted ? 'Channel unmuted' : 'Channel muted'); }}>
+              {channel.is_muted ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
+              {channel.is_muted ? 'Unmute channel' : 'Mute channel'}
             </DropdownMenuItem>
-            {channel.is_starred ? (
-              <DropdownMenuItem className="gap-2 text-sm" onClick={() => toast.info('Removed from starred')}>
-                <StarOff className="w-4 h-4" />
-                Unstar channel
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem className="gap-2 text-sm" onClick={() => toast.info('Added to starred')}>
-                <Star className="w-4 h-4" />
-                Star channel
-              </DropdownMenuItem>
-            )}
+            <DropdownMenuItem className="gap-2 text-sm" onClick={() => { toggleStar(channel.id); toast.success(channel.is_starred ? 'Removed from starred' : 'Added to starred'); }}>
+              {channel.is_starred ? <StarOff className="w-4 h-4" /> : <Star className="w-4 h-4" />}
+              {channel.is_starred ? 'Unstar channel' : 'Star channel'}
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             {!isDM && (
               <DropdownMenuItem className="gap-2 text-sm" onClick={() => toast.info('Edit topic — coming soon')}>
