@@ -1,7 +1,6 @@
 import { useChatContext } from './ChatContext';
-import { Hash, Lock, Search, Pin, Users, Megaphone, Zap, Sparkles, Menu } from 'lucide-react';
+import { Hash, Lock, Search, Pin, Users, Megaphone, Sparkles, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { notifyNavigation } from '@/lib/gfunnel-bridge';
 
 export function ChannelHeader() {
   const { channels, activeChannelId, setRightPanel, rightPanel, sidebarCollapsed, setSidebarCollapsed, setMobileSidebarOpen } = useChatContext();
@@ -49,13 +48,6 @@ export function ChannelHeader() {
         )}
       </div>
       <div className="flex items-center gap-1 shrink-0">
-        {channel.linked_module_slug && (
-          <Button variant="ghost" size="sm" className="h-7 text-xs text-primary gap-1 hidden sm:flex"
-            onClick={() => notifyNavigation(`/${channel.linked_module_slug}`)}>
-            <Zap className="w-3 h-3" />
-            Open {channel.linked_module_label}
-          </Button>
-        )}
         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"
           onClick={() => setRightPanel(rightPanel === 'ai' ? 'none' : 'ai')}>
           <Sparkles className="w-4 h-4" />
@@ -63,7 +55,7 @@ export function ChannelHeader() {
         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hidden sm:flex">
           <Search className="w-4 h-4" />
         </Button>
-        {!isDM && channel.pinned_message_ids.length > 0 && (
+        {!isDM && (channel.pinned_message_ids?.length ?? 0) > 0 && (
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hidden sm:flex">
             <Pin className="w-4 h-4" />
           </Button>
