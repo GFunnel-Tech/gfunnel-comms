@@ -14,6 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      channel_contacts: {
+        Row: {
+          channel_id: string
+          created_at: string
+          created_by: string
+          external_id: string
+          external_name: string | null
+          id: string
+          integration_id: string
+          is_active: boolean
+          last_message_at: string | null
+          metadata: Json
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          created_by: string
+          external_id: string
+          external_name?: string | null
+          id?: string
+          integration_id: string
+          is_active?: boolean
+          last_message_at?: string | null
+          metadata?: Json
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          created_by?: string
+          external_id?: string
+          external_name?: string | null
+          id?: string
+          integration_id?: string
+          is_active?: boolean
+          last_message_at?: string | null
+          metadata?: Json
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_contacts_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_contacts_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "channel_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      channel_integrations: {
+        Row: {
+          config: Json
+          created_at: string
+          created_by: string
+          credentials_secret_name: string | null
+          display_name: string
+          id: string
+          is_active: boolean
+          provider: Database["public"]["Enums"]["messaging_provider"]
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          created_by: string
+          credentials_secret_name?: string | null
+          display_name: string
+          id?: string
+          is_active?: boolean
+          provider: Database["public"]["Enums"]["messaging_provider"]
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          created_by?: string
+          credentials_secret_name?: string | null
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          provider?: Database["public"]["Enums"]["messaging_provider"]
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       chat_api_keys: {
         Row: {
           created_at: string
@@ -530,6 +629,14 @@ export type Database = {
         | "automation"
       message_source: "user" | "ai" | "n8n" | "system"
       message_type: "text" | "file" | "image" | "system" | "ai" | "automation"
+      messaging_provider:
+        | "whatsapp"
+        | "telegram"
+        | "facebook"
+        | "instagram"
+        | "linkedin"
+        | "sms"
+        | "custom_webhook"
       presence_status: "online" | "away" | "dnd" | "offline"
     }
     CompositeTypes: {
@@ -669,6 +776,15 @@ export const Constants = {
       ],
       message_source: ["user", "ai", "n8n", "system"],
       message_type: ["text", "file", "image", "system", "ai", "automation"],
+      messaging_provider: [
+        "whatsapp",
+        "telegram",
+        "facebook",
+        "instagram",
+        "linkedin",
+        "sms",
+        "custom_webhook",
+      ],
       presence_status: ["online", "away", "dnd", "offline"],
     },
   },
