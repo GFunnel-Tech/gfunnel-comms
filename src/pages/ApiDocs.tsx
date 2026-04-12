@@ -223,46 +223,69 @@ const sections: { id: Section; label: string; icon: React.ReactNode }[] = [
 
 export default function ApiDocsPage() {
   const [active, setActive] = useState<Section>('overview');
+  const [globalApiKey, setGlobalApiKey] = useState('');
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
-      {/* Sidebar */}
-      <div className="w-56 border-r border-border bg-card flex flex-col shrink-0">
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <Code className="w-5 h-5 text-primary" />
-            <h1 className="text-sm font-bold">API Reference</h1>
+    <GlobalApiKeyContext.Provider value={globalApiKey}>
+      <div className="flex h-screen bg-background text-foreground">
+        {/* Sidebar */}
+        <div className="w-56 border-r border-border bg-card flex flex-col shrink-0">
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center gap-2">
+              <Code className="w-5 h-5 text-primary" />
+              <h1 className="text-sm font-bold">API Reference</h1>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">GFunnel Chat Platform API</p>
           </div>
-          <p className="text-[10px] text-muted-foreground mt-1">GFunnel Chat Platform API</p>
+          <ScrollArea className="flex-1 p-2">
+            {sections.map(s => (
+              <button key={s.id} onClick={() => setActive(s.id)}
+                className={cn('w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors', active === s.id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}>
+                {s.icon}
+                {s.label}
+              </button>
+            ))}
+          </ScrollArea>
+          <div className="p-3 border-t border-border">
+            <a href="/docs/api" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+              <ExternalLink className="w-3 h-3" /> Full docs (Markdown)
+            </a>
+          </div>
         </div>
-        <ScrollArea className="flex-1 p-2">
-          {sections.map(s => (
-            <button key={s.id} onClick={() => setActive(s.id)}
-              className={cn('w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors', active === s.id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}>
-              {s.icon}
-              {s.label}
-            </button>
-          ))}
-        </ScrollArea>
-        <div className="p-3 border-t border-border">
-          <a href="/docs/api" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
-            <ExternalLink className="w-3 h-3" /> Full docs (Markdown)
-          </a>
-        </div>
-      </div>
 
-      {/* Content */}
-      <ScrollArea className="flex-1">
-        <div className="max-w-3xl mx-auto p-8">
-          {active === 'overview' && <OverviewSection />}
-          {active === 'auth' && <AuthSection />}
-          {active === 'channels' && <ChannelsSection />}
-          {active === 'messages' && <MessagesSection />}
-          {active === 'webhooks' && <WebhooksSection />}
-          {active === 'events' && <EventsSection />}
-        </div>
-      </ScrollArea>
-    </div>
+        {/* Content */}
+        <ScrollArea className="flex-1">
+          {/* Global API Key Bar */}
+          <div className="sticky top-0 z-10 bg-card/95 backdrop-blur border-b border-border px-8 py-3">
+            <div className="max-w-3xl mx-auto flex items-center gap-3">
+              <Key className="w-4 h-4 text-primary shrink-0" />
+              <label className="text-xs font-semibold text-muted-foreground whitespace-nowrap">Global API Key</label>
+              <input
+                type="text"
+                value={globalApiKey}
+                onChange={e => setGlobalApiKey(e.target.value)}
+                placeholder="Paste your API key here — it will be used in all Try-It panels"
+                className="flex-1 px-3 py-1.5 text-xs font-mono bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              {globalApiKey && (
+                <span className="text-[10px] text-green-500 font-medium whitespace-nowrap flex items-center gap-1">
+                  <Shield className="w-3 h-3" /> Active
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="max-w-3xl mx-auto p-8">
+            {active === 'overview' && <OverviewSection />}
+            {active === 'auth' && <AuthSection />}
+            {active === 'channels' && <ChannelsSection />}
+            {active === 'messages' && <MessagesSection />}
+            {active === 'webhooks' && <WebhooksSection />}
+            {active === 'events' && <EventsSection />}
+          </div>
+        </ScrollArea>
+      </div>
+    </GlobalApiKeyContext.Provider>
   );
 }
 
