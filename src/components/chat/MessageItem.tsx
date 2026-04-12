@@ -15,7 +15,7 @@ interface MessageItemProps {
 }
 
 export function MessageItem({ message, isCompact }: MessageItemProps) {
-  const { currentUser, setThreadParentId, toggleReaction, users, allMessages } = useChatContext();
+  const { currentUser, setThreadParentId, toggleReaction, users, allMessages, setHoveredMessageId } = useChatContext();
 
   if (message.type === 'system') {
     return (
@@ -46,11 +46,15 @@ export function MessageItem({ message, isCompact }: MessageItemProps) {
     .filter(Boolean);
 
   return (
-    <div className={cn(
-      'group relative px-4 hover:bg-muted/30 transition-all duration-150',
-      isAI && 'border-l-2 border-info bg-info/5',
-      isAutomation && 'border-l-2 border-warning bg-warning/5',
-    )}>
+    <div
+      className={cn(
+        'group relative px-4 hover:bg-muted/30 transition-all duration-150',
+        isAI && 'border-l-2 border-info bg-info/5',
+        isAutomation && 'border-l-2 border-warning bg-warning/5',
+      )}
+      onMouseEnter={() => setHoveredMessageId(message.id)}
+      onMouseLeave={() => setHoveredMessageId(null)}
+    >
       {/* Hover action bar */}
       <div className="absolute -top-3 right-4 hidden group-hover:flex items-center bg-card border border-border rounded-lg shadow-enterprise z-10">
         {quickReactions.slice(0, 3).map(emoji => (
