@@ -324,6 +324,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       rightPanel, setRightPanel,
       isLive, loading: isLive ? sb.loading : false,
       workspaces, activeWorkspaceId, activeWorkspaceName, switchWorkspace,
+      reorderWorkspaces, workspaceFolders, createWorkspaceFolder, removeWorkspaceFromFolder, deleteWorkspaceFolder,
     }}>
       {children}
     </ChatContext.Provider>
