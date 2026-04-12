@@ -47,6 +47,7 @@ interface ChatContextType {
   createWorkspaceFolder: (name: string, workspaceIds: string[]) => void;
   removeWorkspaceFromFolder: (folderId: string, workspaceId: string) => void;
   deleteWorkspaceFolder: (folderId: string) => void;
+  renameWorkspaceFolder: (folderId: string, newName: string) => void;
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);
@@ -126,6 +127,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   const deleteWorkspaceFolder = useCallback((folderId: string) => {
     persistFolders(workspaceFolders.filter(f => f.id !== folderId));
+  }, [workspaceFolders, persistFolders]);
+
+  const renameWorkspaceFolder = useCallback((folderId: string, newName: string) => {
+    persistFolders(workspaceFolders.map(f => f.id === folderId ? { ...f, name: newName } : f));
   }, [workspaceFolders, persistFolders]);
 
   const workspaceId = isLive ? (gfunnel.workspaceId ?? 'default-workspace') : activeWorkspaceId;
@@ -324,7 +329,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       rightPanel, setRightPanel,
       isLive, loading: isLive ? sb.loading : false,
       workspaces, activeWorkspaceId, activeWorkspaceName, switchWorkspace,
-      reorderWorkspaces, workspaceFolders, createWorkspaceFolder, removeWorkspaceFromFolder, deleteWorkspaceFolder,
+      reorderWorkspaces, workspaceFolders, createWorkspaceFolder, removeWorkspaceFromFolder, deleteWorkspaceFolder, renameWorkspaceFolder,
     }}>
       {children}
     </ChatContext.Provider>

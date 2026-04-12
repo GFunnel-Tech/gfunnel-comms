@@ -17,6 +17,7 @@ interface WorkspaceRailProps {
   onCreateFolder: (name: string, workspaceIds: string[]) => void;
   onRemoveFromFolder: (folderId: string, workspaceId: string) => void;
   onDeleteFolder: (folderId: string) => void;
+  onRenameFolder: (folderId: string, newName: string) => void;
 }
 
 function getInitials(name: string): string {
@@ -90,7 +91,7 @@ function WorkspaceIcon({
 }
 
 function FolderItem({
-  folder, workspaces, activeWorkspaceId, onSwitch, onRemoveFromFolder, onDeleteFolder,
+  folder, workspaces, activeWorkspaceId, onSwitch, onRemoveFromFolder, onDeleteFolder, onRenameFolder,
   onDragOver, onDrop,
 }: {
   folder: WorkspaceFolder;
@@ -99,9 +100,13 @@ function FolderItem({
   onSwitch: (ws: WorkspaceConnection) => void;
   onRemoveFromFolder: (folderId: string, wsId: string) => void;
   onDeleteFolder: (folderId: string) => void;
+  onRenameFolder: (folderId: string, newName: string) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(folder.name);
+  const inputRef = useRef<HTMLInputElement>(null);
   const folderWorkspaces = folder.workspaceIds
     .map(id => workspaces.find(ws => ws.workspace_id === id))
     .filter(Boolean) as WorkspaceConnection[];
@@ -153,7 +158,38 @@ function FolderItem({
       </Tooltip>
       <PopoverContent side="right" align="start" className="w-auto p-2 space-y-1.5">
         <div className="flex items-center justify-between gap-4 px-1 mb-1">
-          <span className="text-xs font-semibold text-foreground">{folder.name}</span>
+          {isEditing ? (
+            <Input
+              ref={inputRef}
+              value={editName}
+              onChange={e => setEditName(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && editName.trim()) {
+                  onRenameFolder(folder.id, editName.trim());
+                  setIsEditing(false);
+                } else if (e.key === 'Escape') {
+                  setEditName(folder.name);
+                  setIsEditing(false);
+                }
+              }}
+              onBlur={() => {
+                if (editName.trim() && editName.trim() !== folder.name) {
+                  onRenameFolder(folder.id, editName.trim());
+                }
+                setIsEditing(false);
+              }}
+              className="h-5 text-xs font-semibold px-1 py-0 w-24"
+              autoFocus
+            />
+          ) : (
+            <button
+              className="text-xs font-semibold text-foreground hover:text-primary cursor-text transition-colors"
+              onClick={() => { setIsEditing(true); setEditName(folder.name); }}
+              title="Click to rename"
+            >
+              {folder.name}
+            </button>
+          )}
           <Button variant="ghost" size="sm" className="h-5 text-[10px] text-destructive px-1.5"
             onClick={() => onDeleteFolder(folder.id)}>
             Ungroup
@@ -196,7 +232,7 @@ function FolderItem({
 }
 
 export function WorkspaceRail({
-  workspaces, activeWorkspaceId, onSwitch, onReorder, folders, onCreateFolder, onRemoveFromFolder, onDeleteFolder,
+  workspaces, activeWorkspaceId, onSwitch, onReorder, folders, onCreateFolder, onRemoveFromFolder, onDeleteFolder, onRenameFolder,
 }: WorkspaceRailProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
@@ -318,6 +354,7 @@ export function WorkspaceRail({
                 onSwitch={onSwitch}
                 onRemoveFromFolder={onRemoveFromFolder}
                 onDeleteFolder={onDeleteFolder}
+                onRenameFolder={onRenameFolder}
                 onDragOver={handleDragOverFolder}
                 onDrop={handleDropOnFolder(item.folder.id)}
               />
