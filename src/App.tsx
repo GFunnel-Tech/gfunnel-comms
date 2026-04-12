@@ -20,15 +20,21 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
   if (isEmbedded && bridgeTimedOut && !user) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen gap-3 text-center px-4">
+      <div className="flex flex-col items-center justify-center h-screen gap-4 text-center px-4 bg-background">
+        <div className="text-3xl font-bold text-foreground tracking-tight">GFunnel</div>
         <div className="text-2xl">⚠️</div>
         <h2 className="text-lg font-semibold text-foreground">Connection timed out</h2>
         <p className="text-sm text-muted-foreground max-w-md">
-          Unable to authenticate with the GFunnel platform. Please refresh the page or contact your workspace admin.
+          Unable to authenticate with the GFunnel platform. Please refresh the page or sign in directly.
         </p>
-        <button onClick={() => window.location.reload()} className="mt-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity">
-          Retry
-        </button>
+        <div className="flex gap-3 mt-2">
+          <button onClick={() => window.location.reload()} className="px-4 py-2 rounded-md border border-border text-sm text-foreground hover:bg-muted transition-colors">
+            Retry
+          </button>
+          <button onClick={() => window.location.href = '/auth'} className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity">
+            Sign in
+          </button>
+        </div>
       </div>
     );
   }
