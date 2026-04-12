@@ -16,7 +16,7 @@ function ChatLayoutInner() {
   const {
     activeChannelId, rightPanel, mobileSidebarOpen, setMobileSidebarOpen, setRightPanel,
     workspaces, activeWorkspaceId, switchWorkspace,
-    reorderWorkspaces, workspaceFolders, createWorkspaceFolder, removeWorkspaceFromFolder, deleteWorkspaceFolder,
+    reorderWorkspaces, workspaceFolders, createWorkspaceFolder, removeWorkspaceFromFolder, deleteWorkspaceFolder, renameWorkspaceFolder,
   } = useChatContext();
   const containerRef = useRef<HTMLDivElement>(null);
   const showRail = useMediaQuery('(min-width: 900px)');
