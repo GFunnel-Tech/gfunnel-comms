@@ -4,6 +4,15 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Search, Hash, MessageSquare, User, Sparkles, Plus, FileDown } from 'lucide-react';
 import { format } from 'date-fns';
 
+function highlightText(text: string, query: string) {
+  if (!query.trim()) return text;
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const parts = text.split(regex);
+  return parts.map((part, i) =>
+    regex.test(part) ? <mark key={i} className="bg-primary/30 text-foreground rounded-sm px-0.5">{part}</mark> : part
+  );
+}
+
 export function SearchModal() {
   const { searchOpen, setSearchOpen, searchQuery, setSearchQuery, channels, users, setActiveChannelId, allMessages, setRightPanel, setHighlightedMessageId, setJumpToMessageId } = useChatContext();
 

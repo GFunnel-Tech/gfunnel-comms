@@ -2,16 +2,32 @@ import { useRef, useEffect, useMemo } from 'react';
 import { useChatContext } from './ChatContext';
 import { MessageItem } from './MessageItem';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { format, isToday, isYesterday, isSameDay } from 'date-fns';
+import { format, isToday, isYesterday } from 'date-fns';
 import { Pin } from 'lucide-react';
 
 export function MessageFeed() {
-  const { messages, channels, activeChannelId } = useChatContext();
+  const { messages, channels, activeChannelId, jumpToMessageId, setJumpToMessageId } = useChatContext();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const channel = channels.find(c => c.id === activeChannelId);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (jumpToMessageId) {
+      // Wait for render then scroll
+      requestAnimationFrame(() => {
+        const el = messageRefs.current.get(jumpToMessageId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        setJumpToMessageId(null);
+      });
+    }
+  }, [jumpToMessageId, setJumpToMessageId, messages]);
+
+  useEffect(() => {
+    if (!jumpToMessageId) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages.length, activeChannelId]);
 
   const groupedMessages = useMemo(() => {
@@ -75,7 +91,11 @@ export function MessageFeed() {
                 && prev.type !== 'system'
                 && msg.type !== 'system'
                 && (new Date(msg.created_at).getTime() - new Date(prev.created_at).getTime()) < 300000;
-              return <MessageItem key={msg.id} message={msg} isCompact={!!isCompact} />;
+              return (
+                <div key={msg.id} ref={el => { if (el) messageRefs.current.set(msg.id, el); else messageRefs.current.delete(msg.id); }}>
+                  <MessageItem message={msg} isCompact={!!isCompact} />
+                </div>
+              );
             })}
           </div>
         ))}
