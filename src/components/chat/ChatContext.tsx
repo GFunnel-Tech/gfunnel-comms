@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { ChatChannel, ChatMessage, ChatUser } from '@/data/chat-types';
+import { ChatChannel, ChatMessage, ChatUser, ChannelType } from '@/data/chat-types';
 import { demoChannels, demoMessages, demoUsers, currentDemoUser } from '@/data/chat-demo-data';
 import { useGFunnel } from '@/hooks/useGFunnel';
 import { useSupabaseChat } from '@/hooks/useSupabaseChat';
