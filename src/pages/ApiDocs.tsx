@@ -53,7 +53,8 @@ interface TryItConfig {
   description: string;
 }
 
-function TryItPanel({ config, globalApiKey }: { config: TryItConfig; globalApiKey?: string }) {
+function TryItPanel({ config }: { config: TryItConfig }) {
+  const globalApiKey = useContext(GlobalApiKeyContext);
   const [open, setOpen] = useState(false);
   const [localApiKey, setLocalApiKey] = useState('');
   const apiKey = localApiKey || globalApiKey || '';
