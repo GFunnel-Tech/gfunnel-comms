@@ -10,5 +10,5 @@ Demo mode when standalone (not in iframe). 5 users, 7 channels, AI + automation 
 ## Memories
 - [Bridge SDK](mem://features/bridge-sdk) — GFunnel iframe bridge with postMessage, auth token, presence
 - [Design system](mem://design/tokens) — Full dark theme tokens, department colors, font config
-- [V2 spec](mem://features/v2-spec) — Complete feature list for GFunnel Chat v2 from uploaded prompt
-- [V3 supplement](mem://features/v3-supplement) — Remove Open Module from header, add workspace switcher rail
+- [V2 spec](mem://features/v2-spec) — Full feature list from uploaded prompt doc
+- [Platform API](mem://features/platform-api) — REST API with API keys, webhooks, events edge functions + docs
