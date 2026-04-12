@@ -85,9 +85,48 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const isLive = isEmbeddedLive || !!supabaseUser;
 
   // Workspace state
-  const [workspaces] = useState<WorkspaceConnection[]>(demoWorkspaceConnections);
+  const [workspaces, setWorkspaces] = useState<WorkspaceConnection[]>(demoWorkspaceConnections);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState('demo-workspace');
   const activeWorkspaceName = workspaces.find(w => w.workspace_id === activeWorkspaceId)?.workspace_name ?? 'Workspace';
+
+  // Workspace folders — persisted in localStorage
+  const [workspaceFolders, setWorkspaceFolders] = useState<WorkspaceFolder[]>(() => {
+    try {
+      const saved = localStorage.getItem('workspace_folders');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+
+  const persistFolders = useCallback((folders: WorkspaceFolder[]) => {
+    setWorkspaceFolders(folders);
+    localStorage.setItem('workspace_folders', JSON.stringify(folders));
+  }, []);
+
+  const reorderWorkspaces = useCallback((fromIndex: number, toIndex: number) => {
+    setWorkspaces(prev => {
+      const updated = [...prev];
+      const [moved] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, moved);
+      return updated.map((ws, i) => ({ ...ws, sort_order: i }));
+    });
+  }, []);
+
+  const createWorkspaceFolder = useCallback((name: string, workspaceIds: string[]) => {
+    const folder: WorkspaceFolder = { id: `folder-${Date.now()}`, name, workspaceIds };
+    persistFolders([...workspaceFolders, folder]);
+  }, [workspaceFolders, persistFolders]);
+
+  const removeWorkspaceFromFolder = useCallback((folderId: string, workspaceId: string) => {
+    const updated = workspaceFolders.map(f => {
+      if (f.id !== folderId) return f;
+      return { ...f, workspaceIds: f.workspaceIds.filter(id => id !== workspaceId) };
+    }).filter(f => f.workspaceIds.length > 1);
+    persistFolders(updated);
+  }, [workspaceFolders, persistFolders]);
+
+  const deleteWorkspaceFolder = useCallback((folderId: string) => {
+    persistFolders(workspaceFolders.filter(f => f.id !== folderId));
+  }, [workspaceFolders, persistFolders]);
 
   const workspaceId = isLive ? (gfunnel.workspaceId ?? 'default-workspace') : activeWorkspaceId;
   const userId = isEmbeddedLive
