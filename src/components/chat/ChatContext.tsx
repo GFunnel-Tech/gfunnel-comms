@@ -1,6 +1,9 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import { ChatChannel, ChatMessage, ChatUser } from '@/data/chat-types';
 import { demoChannels, demoMessages, demoUsers, currentDemoUser } from '@/data/chat-demo-data';
+import { useGFunnel } from '@/hooks/useGFunnel';
+import { useSupabaseChat } from '@/hooks/useSupabaseChat';
+import { supabase } from '@/integrations/supabase/client';
 
 type RightPanel = 'none' | 'thread' | 'ai';
 
@@ -27,6 +30,8 @@ interface ChatContextType {
   setMobileSidebarOpen: (v: boolean) => void;
   rightPanel: RightPanel;
   setRightPanel: (p: RightPanel) => void;
+  isLive: boolean;
+  loading: boolean;
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);
@@ -38,15 +43,85 @@ export function useChatContext() {
 }
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
-  const [allMessages, setAllMessages] = useState<ChatMessage[]>(demoMessages);
-  const [channels] = useState<ChatChannel[]>(demoChannels);
-  const [activeChannelId, setActiveChannelId] = useState('ch-general');
+  const gfunnel = useGFunnel('chat');
+  const isLive = gfunnel.isEmbedded && !!gfunnel.authToken;
+
+  // Set Supabase session from GFunnel auth token
+  useEffect(() => {
+    if (gfunnel.authToken) {
+      supabase.auth.setSession({
+        access_token: gfunnel.authToken,
+        refresh_token: '',
+      });
+    }
+  }, [gfunnel.authToken]);
+
+  const workspaceId = gfunnel.workspaceId ?? 'demo-workspace';
+  const userId = gfunnel.userId ?? currentDemoUser.id;
+
+  const sb = useSupabaseChat(isLive ? workspaceId : '', isLive ? userId : '');
+
+  // Demo mode state
+  const [demoAllMessages, setDemoAllMessages] = useState<ChatMessage[]>(demoMessages);
+  const [demoChannelList] = useState<ChatChannel[]>(demoChannels);
+
+  // Shared UI state
+  const [activeChannelId, setActiveChannelIdRaw] = useState('ch-general');
   const [threadParentId, setThreadParentId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [rightPanel, setRightPanel] = useState<RightPanel>('none');
+
+  const channels = isLive ? sb.channels : demoChannelList;
+  const allMessages = isLive ? sb.allMessages : demoAllMessages;
+
+  // When switching channels in live mode, load messages
+  const setActiveChannelId = useCallback((id: string) => {
+    setActiveChannelIdRaw(id);
+    if (isLive) sb.loadMessages(id);
+  }, [isLive, sb.loadMessages]);
+
+  // Set initial active channel
+  useEffect(() => {
+    if (channels.length > 0 && !channels.find(c => c.id === activeChannelId)) {
+      setActiveChannelIdRaw(channels[0].id);
+    }
+  }, [channels]);
+
+  // Load messages for active channel in live mode
+  useEffect(() => {
+    if (isLive && activeChannelId) {
+      sb.loadMessages(activeChannelId);
+    }
+  }, [isLive, activeChannelId]);
+
+  // Set presence when going live
+  useEffect(() => {
+    if (isLive) {
+      sb.updatePresence('online');
+      const interval = setInterval(() => sb.updatePresence('online'), 30000);
+      return () => {
+        clearInterval(interval);
+        sb.updatePresence('offline');
+      };
+    }
+  }, [isLive]);
+
+  // Current user
+  const currentUser: ChatUser = isLive
+    ? {
+        id: userId,
+        display_name: gfunnel.userDisplayName || 'You',
+        avatar_url: gfunnel.userAvatarUrl,
+        email: gfunnel.userEmail || '',
+        status: 'online',
+        role: gfunnel.userRole,
+      }
+    : currentDemoUser;
+
+  const users = isLive ? [currentUser] : demoUsers; // In live mode, users come from presence/profiles
 
   const messages = useMemo(
     () => allMessages.filter(m => m.channel_id === activeChannelId && !m.thread_parent_id)
@@ -67,7 +142,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setRightPanel(id ? 'thread' : 'none');
   }, []);
 
+  // Send message - live or demo
   const sendMessage = useCallback((content: string, channelId: string, parentId?: string) => {
+    if (isLive) {
+      sb.sendMessage(content, channelId, parentId);
+      return;
+    }
+    // Demo mode
     const now = new Date().toISOString();
     const newMsg: ChatMessage = {
       id: `msg-${Date.now()}`, workspace_id: 'demo-workspace', channel_id: channelId,
@@ -78,7 +159,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       mentions: [], channel_mentions: [], context_links: [], metadata: {},
       created_at: now, updated_at: now,
     };
-    setAllMessages(prev => {
+    setDemoAllMessages(prev => {
       const updated = [...prev, newMsg];
       if (parentId) {
         return updated.map(m => m.id === parentId ? {
@@ -90,10 +171,16 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       }
       return updated;
     });
-  }, []);
+  }, [isLive, sb.sendMessage]);
 
+  // Toggle reaction - live or demo
   const toggleReaction = useCallback((messageId: string, emoji: string) => {
-    setAllMessages(prev => prev.map(m => {
+    if (isLive) {
+      sb.toggleReaction(messageId, emoji);
+      return;
+    }
+    // Demo mode
+    setDemoAllMessages(prev => prev.map(m => {
       if (m.id !== messageId) return m;
       const current = m.reactions[emoji] || [];
       const hasReacted = current.includes(currentDemoUser.id);
@@ -105,11 +192,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       else reactions[emoji] = updated;
       return { ...m, reactions };
     }));
-  }, []);
+  }, [isLive, sb.toggleReaction]);
 
   return (
     <ChatContext.Provider value={{
-      currentUser: currentDemoUser, users: demoUsers, channels,
+      currentUser, users, channels,
       activeChannelId, setActiveChannelId, messages, allMessages,
       threadParentId, setThreadParentId: handleSetThreadParentId, threadReplies,
       sendMessage, toggleReaction,
@@ -117,6 +204,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       sidebarCollapsed, setSidebarCollapsed,
       mobileSidebarOpen, setMobileSidebarOpen,
       rightPanel, setRightPanel,
+      isLive,
+      loading: isLive ? sb.loading : false,
     }}>
       {children}
     </ChatContext.Provider>
