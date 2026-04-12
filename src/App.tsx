@@ -45,9 +45,10 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 }
 
 function PublicOnlyRoute({ children }: { children: ReactNode }) {
-  const { user, loading, isEmbedded } = useAuth();
+  const { user, loading, isEmbedded, bridgeTimedOut } = useAuth();
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
-  if (user || isEmbedded) return <Navigate to="/" replace />;
+  if (user && !bridgeTimedOut) return <Navigate to="/" replace />;
+  return <>{children}</>;
   return <>{children}</>;
 }
 
