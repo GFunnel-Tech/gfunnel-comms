@@ -42,6 +42,11 @@ interface ChatContextType {
   activeWorkspaceId: string;
   activeWorkspaceName: string;
   switchWorkspace: (ws: WorkspaceConnection) => void;
+  reorderWorkspaces: (fromIndex: number, toIndex: number) => void;
+  workspaceFolders: WorkspaceFolder[];
+  createWorkspaceFolder: (name: string, workspaceIds: string[]) => void;
+  removeWorkspaceFromFolder: (folderId: string, workspaceId: string) => void;
+  deleteWorkspaceFolder: (folderId: string) => void;
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);
