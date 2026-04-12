@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useChatContext } from './ChatContext';
-import { useActiveTabContext } from './ChatLayout';
+import { useActiveTabContext } from './ActiveTabContext';
 import { MessageSquare, Pin, FileText, Users, Plus, X, Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';

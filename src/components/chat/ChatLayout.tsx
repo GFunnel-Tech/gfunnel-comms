@@ -1,4 +1,4 @@
-import { useRef, useState, createContext, useContext } from 'react';
+import { useRef, useState } from 'react';
 import { ChatProvider } from './ChatContext';
 import { ChatSidebar } from './ChatSidebar';
 import { ChannelHeader } from './ChannelHeader';
@@ -12,10 +12,7 @@ import { WorkspaceRail } from './WorkspaceRail';
 import { useChatContext } from './ChatContext';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-
-// Shared active tab state so ChannelTabBar can control what the layout renders
-const ActiveTabContext = createContext<{ activeTab: string; setActiveTab: (t: string) => void }>({ activeTab: 'messages', setActiveTab: () => {} });
-export function useActiveTabContext() { return useContext(ActiveTabContext); }
+import { ActiveTabContext } from './ActiveTabContext';
 
 function ChatLayoutInner() {
   const {
