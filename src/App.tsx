@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useNavigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,6 +18,7 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading, isEmbedded, bridgeTimedOut } = useAuth();
+  const navigate = useNavigate();
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
   if (isEmbedded && bridgeTimedOut && !user) {
     return (
@@ -32,7 +33,7 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
           <button onClick={() => window.location.reload()} className="px-4 py-2 rounded-md border border-border text-sm text-foreground hover:bg-muted transition-colors">
             Retry
           </button>
-          <button onClick={() => window.location.href = '/auth'} className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity">
+          <button onClick={() => navigate('/auth')} className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity">
             Sign in
           </button>
         </div>
@@ -44,9 +45,10 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 }
 
 function PublicOnlyRoute({ children }: { children: ReactNode }) {
-  const { user, loading, isEmbedded } = useAuth();
+  const { user, loading, isEmbedded, bridgeTimedOut } = useAuth();
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
-  if (user || isEmbedded) return <Navigate to="/" replace />;
+  if (user && !bridgeTimedOut) return <Navigate to="/" replace />;
+  return <>{children}</>;
   return <>{children}</>;
 }
 
