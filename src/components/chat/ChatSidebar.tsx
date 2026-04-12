@@ -242,6 +242,7 @@ export function ChatSidebar() {
           </Button>
         </div>
       </div>
+      <CreateChannelDialog open={createOpen} onOpenChange={setCreateOpen} onCreate={createChannel} />
     </div>
   );
 }
