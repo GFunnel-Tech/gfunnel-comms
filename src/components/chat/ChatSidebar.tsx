@@ -37,11 +37,12 @@ function getChannelIcon(type: string, emoji: string) {
 }
 
 export function ChatSidebar() {
-  const { channels, activeChannelId, setActiveChannelId, currentUser, users, setSearchOpen, sidebarCollapsed, setSidebarCollapsed, setRightPanel, setMobileSidebarOpen, activeWorkspaceName, workspaces, activeWorkspaceId, switchWorkspace } = useChatContext();
+  const { channels, activeChannelId, setActiveChannelId, currentUser, users, setSearchOpen, sidebarCollapsed, setSidebarCollapsed, setRightPanel, setMobileSidebarOpen, activeWorkspaceName, workspaces, activeWorkspaceId, switchWorkspace, createChannel } = useChatContext();
   const showRail = useMediaQuery('(min-width: 900px)');
   const [starredOpen, setStarredOpen] = useState(true);
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const starredChannels = channels.filter(c => c.is_starred);
   const publicChannels = channels.filter(c => c.type !== 'dm' && c.type !== 'group_dm' && !c.is_starred);
