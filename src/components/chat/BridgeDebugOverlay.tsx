@@ -17,6 +17,18 @@ export function BridgeDebugOverlay() {
   const { user, isEmbedded, bridgeTimedOut, loading } = useAuth();
   const gfunnel = useGFunnel('chat');
 
+  // Toggle with Ctrl+Shift+D
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        setVisible((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   // Intercept console logs with [GFunnel Bridge] prefix
   useEffect(() => {
     const origInfo = console.info;
@@ -45,17 +57,7 @@ export function BridgeDebugOverlay() {
     return () => { console.info = origInfo; console.warn = origWarn; console.error = origError; };
   }, []);
 
-  if (!visible) {
-    return (
-      <button
-        onClick={() => setVisible(true)}
-        className="fixed bottom-3 right-3 z-[9999] p-2 rounded-full bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors backdrop-blur-sm border border-border/50"
-        title="Bridge Debug"
-      >
-        <Bug className="w-4 h-4" />
-      </button>
-    );
-  }
+  if (!visible) return null;
 
   const statusColor = loading
     ? 'bg-yellow-500'
