@@ -87,7 +87,44 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
     }
   };
 
+  // Detect @mention while typing
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    setValue(newValue);
+
+    const cursor = e.target.selectionStart;
+    const textBeforeCursor = newValue.slice(0, cursor);
+    const atMatch = textBeforeCursor.match(/@(\w*)$/);
+
+    if (atMatch) {
+      setMentionQuery(atMatch[1]);
+      setMentionStart(cursor - atMatch[0].length);
+    } else {
+      setMentionQuery(null);
+    }
+  };
+
+  const handleMentionSelect = (user: ChatUser) => {
+    const before = value.slice(0, mentionStart);
+    const after = value.slice(textareaRef.current?.selectionStart ?? mentionStart);
+    const mention = `@${user.display_name} `;
+    const newValue = before + mention + after;
+    setValue(newValue);
+    setMentionQuery(null);
+
+    // Restore cursor position
+    setTimeout(() => {
+      if (textareaRef.current) {
+        const pos = before.length + mention.length;
+        textareaRef.current.selectionStart = textareaRef.current.selectionEnd = pos;
+        textareaRef.current.focus();
+      }
+    }, 0);
+  };
+
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Let MentionAutocomplete handle keyboard when visible
+    if (mentionQuery !== null) return;
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
