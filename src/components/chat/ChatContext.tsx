@@ -21,6 +21,7 @@ interface ChatContextType {
   setThreadParentId: (id: string | null) => void;
   threadReplies: ChatMessage[];
   sendMessage: (content: string, channelId: string, threadParentId?: string, files?: File[]) => void;
+  createChannel: (data: { name: string; description: string; type: ChannelType; emoji: string }) => void;
   toggleReaction: (messageId: string, emoji: string) => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
@@ -90,7 +91,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   // Demo mode state
   const [demoAllMessages, setDemoAllMessages] = useState<ChatMessage[]>(demoMessages);
-  const [demoChannelList] = useState<ChatChannel[]>(demoChannels);
+  const [demoChannelList, setDemoChannelList] = useState<ChatChannel[]>(demoChannels);
 
   // UI state
   const [activeChannelId, setActiveChannelIdRaw] = useState('ch-general');
