@@ -6,62 +6,66 @@
 
 @layer base {
   :root {
-    --background: 220 20% 97%;
-    --foreground: 220 25% 14%;
+    --background: 220 16% 96%;
+    --foreground: 222 28% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 14%;
+    --card-foreground: 222 28% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 14%;
+    --popover-foreground: 222 28% 12%;
 
-    --primary: 24 95% 53%;
+    --primary: 24 95% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 93%;
-    --secondary-foreground: 220 25% 14%;
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 222 28% 12%;
 
     --muted: 220 14% 93%;
-    --muted-foreground: 220 10% 46%;
+    --muted-foreground: 220 12% 40%;
 
-    --accent: 24 95% 53%;
+    --accent: 24 95% 50%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 24 95% 53%;
+    --border: 220 13% 87%;
+    --input: 220 13% 87%;
+    --ring: 24 95% 50%;
 
-    --radius: 0.75rem;
+    --radius: 0.625rem;
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 10% 46%;
-    --sidebar-primary: 24 95% 53%;
+    --sidebar-background: 220 16% 98%;
+    --sidebar-foreground: 220 12% 38%;
+    --sidebar-primary: 24 95% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 96%;
-    --sidebar-accent-foreground: 220 25% 14%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 24 95% 53%;
+    --sidebar-accent: 220 14% 94%;
+    --sidebar-accent-foreground: 222 28% 12%;
+    --sidebar-border: 220 13% 88%;
+    --sidebar-ring: 24 95% 50%;
 
-    --success: 160 84% 39%;
+    --success: 160 84% 36%;
     --warning: 38 92% 50%;
-    --info: 258 90% 66%;
-    --error: 0 84% 60%;
+    --info: 258 80% 58%;
+    --error: 0 72% 51%;
 
-    --dept-revenue: 24 95% 53%;
-    --dept-creative: 330 81% 60%;
-    --dept-technology: 258 90% 66%;
-    --dept-operations: 187 96% 42%;
-    --dept-finance: 160 84% 39%;
-    --dept-strategy: 217 91% 60%;
-    --dept-support: 0 84% 60%;
-    --dept-ai: 38 92% 50%;
-    --dept-legal: 215 16% 47%;
+    --dept-revenue: 24 90% 48%;
+    --dept-creative: 330 70% 52%;
+    --dept-technology: 258 70% 55%;
+    --dept-operations: 187 80% 38%;
+    --dept-finance: 160 72% 34%;
+    --dept-strategy: 217 80% 52%;
+    --dept-support: 0 72% 51%;
+    --dept-ai: 38 80% 44%;
+    --dept-legal: 215 16% 42%;
 
-    --rail-background: 240 20% 5%;
-    --rail-foreground: 220 20% 70%;
+    --rail-background: 228 24% 8%;
+    --rail-foreground: 220 16% 65%;
+
+    /* Enterprise shadow tokens */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+    --shadow-md: 0 2px 6px -1px rgb(0 0 0 / 0.06), 0 1px 3px -1px rgb(0 0 0 / 0.04);
   }
 }
 
@@ -73,9 +77,20 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Sora', sans-serif;
+  }
+}
+
+@layer utilities {
+  .shadow-enterprise {
+    box-shadow: var(--shadow-md);
+  }
+  .shadow-enterprise-sm {
+    box-shadow: var(--shadow-sm);
   }
 }
