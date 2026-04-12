@@ -22,6 +22,7 @@ interface ChatContextType {
   threadReplies: ChatMessage[];
   sendMessage: (content: string, channelId: string, threadParentId?: string, files?: File[]) => void;
   createChannel: (data: { name: string; description: string; type: ChannelType; emoji: string }) => void;
+  createDM: (userIds: string[]) => void;
   toggleReaction: (messageId: string, emoji: string) => void;
   toggleStar: (channelId: string) => void;
   toggleMute: (channelId: string) => void;
@@ -305,6 +306,45 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setActiveChannelId(newChannel.id);
   }, [activeWorkspaceId, userId, channels.length, isLive, setActiveChannelId]);
 
+  const createDM = useCallback((userIds: string[]) => {
+    // Check if a DM already exists with exactly these users
+    const dmType = userIds.length > 1 ? 'group_dm' : 'dm';
+    const allMembers = [userId, ...userIds].sort();
+    const existing = channels.find(c =>
+      (c.type === 'dm' || c.type === 'group_dm') &&
+      c.member_ids.length === allMembers.length &&
+      [...c.member_ids].sort().every((id, i) => id === allMembers[i])
+    );
+    if (existing) {
+      setActiveChannelId(existing.id);
+      return;
+    }
+
+    const otherUsers = userIds.map(id => users.find(u => u.id === id)).filter(Boolean);
+    const dmName = otherUsers.map(u => u!.display_name).join(', ');
+    const now = new Date().toISOString();
+    const newChannel: ChatChannel = {
+      id: `dm-${Date.now()}`,
+      workspace_id: activeWorkspaceId,
+      name: dmName,
+      type: dmType,
+      emoji: '',
+      created_by: userId,
+      is_archived: false,
+      is_read_only: false,
+      member_ids: allMembers,
+      pinned_message_ids: [],
+      message_count: 0,
+      sort_order: channels.length,
+      created_at: now,
+      updated_at: now,
+    };
+    if (!isLive) {
+      setDemoChannelList(prev => [...prev, newChannel]);
+    }
+    setActiveChannelId(newChannel.id);
+  }, [activeWorkspaceId, userId, channels, users, isLive, setActiveChannelId]);
+
   const toggleStar = useCallback((channelId: string) => {
     if (!isLive) {
       setDemoChannelList(prev => prev.map(c => c.id === channelId ? { ...c, is_starred: !c.is_starred } : c));
@@ -322,7 +362,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       currentUser, users, channels,
       activeChannelId, setActiveChannelId, messages, allMessages,
       threadParentId, setThreadParentId: handleSetThreadParentId, threadReplies,
-      sendMessage, createChannel, toggleReaction, toggleStar, toggleMute,
+      sendMessage, createChannel, createDM, toggleReaction, toggleStar, toggleMute,
       searchQuery, setSearchQuery, searchOpen, setSearchOpen,
       sidebarCollapsed, setSidebarCollapsed,
       mobileSidebarOpen, setMobileSidebarOpen,
