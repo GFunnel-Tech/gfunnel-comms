@@ -23,6 +23,8 @@ interface ChatContextType {
   setSearchOpen: (open: boolean) => void;
   sidebarCollapsed: boolean;
   setSidebarCollapsed: (v: boolean) => void;
+  mobileSidebarOpen: boolean;
+  setMobileSidebarOpen: (v: boolean) => void;
   rightPanel: RightPanel;
   setRightPanel: (p: RightPanel) => void;
 }
@@ -43,6 +45,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [rightPanel, setRightPanel] = useState<RightPanel>('none');
 
   const messages = useMemo(
@@ -112,6 +115,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       sendMessage, toggleReaction,
       searchQuery, setSearchQuery, searchOpen, setSearchOpen,
       sidebarCollapsed, setSidebarCollapsed,
+      mobileSidebarOpen, setMobileSidebarOpen,
       rightPanel, setRightPanel,
     }}>
       {children}
