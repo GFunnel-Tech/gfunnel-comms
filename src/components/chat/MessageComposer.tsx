@@ -5,6 +5,8 @@ import { Bold, Italic, Code, Paperclip, Smile, SendHorizonal, X, FileIcon, Loade
 import { cn } from '@/lib/utils';
 import { EmojiPicker } from './EmojiPicker';
 import { TypingIndicator } from './TypingIndicator';
+import { MentionAutocomplete } from './MentionAutocomplete';
+import type { ChatUser } from '@/data/chat-types';
 
 interface FilePreview {
   file: File;
@@ -19,12 +21,14 @@ interface MessageComposerProps {
 }
 
 export function MessageComposer({ channelId, threadParentId, placeholder }: MessageComposerProps) {
-  const { sendMessage, channels } = useChatContext();
+  const { sendMessage, channels, users } = useChatContext();
   const [value, setValue] = useState('');
   const [files, setFiles] = useState<FilePreview[]>([]);
   const [showEmoji, setShowEmoji] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionStart, setMentionStart] = useState<number>(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounterRef = useRef(0);
@@ -83,7 +87,44 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
     }
   };
 
+  // Detect @mention while typing
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    setValue(newValue);
+
+    const cursor = e.target.selectionStart;
+    const textBeforeCursor = newValue.slice(0, cursor);
+    const atMatch = textBeforeCursor.match(/@(\w*)$/);
+
+    if (atMatch) {
+      setMentionQuery(atMatch[1]);
+      setMentionStart(cursor - atMatch[0].length);
+    } else {
+      setMentionQuery(null);
+    }
+  };
+
+  const handleMentionSelect = (user: ChatUser) => {
+    const before = value.slice(0, mentionStart);
+    const after = value.slice(textareaRef.current?.selectionStart ?? mentionStart);
+    const mention = `@${user.display_name} `;
+    const newValue = before + mention + after;
+    setValue(newValue);
+    setMentionQuery(null);
+
+    // Restore cursor position
+    setTimeout(() => {
+      if (textareaRef.current) {
+        const pos = before.length + mention.length;
+        textareaRef.current.selectionStart = textareaRef.current.selectionEnd = pos;
+        textareaRef.current.focus();
+      }
+    }, 0);
+  };
+
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Let MentionAutocomplete handle keyboard when visible
+    if (mentionQuery !== null) return;
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -216,16 +257,26 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
           </div>
         )}
 
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={e => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder || defaultPlaceholder}
-          rows={1}
-          disabled={isSending}
-          className="w-full px-3 pt-3 pb-2 text-sm bg-transparent text-foreground placeholder:text-muted-foreground resize-none focus:outline-none disabled:opacity-50"
-        />
+        <div className="relative">
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder || defaultPlaceholder}
+            rows={1}
+            disabled={isSending}
+            className="w-full px-3 pt-3 pb-2 text-sm bg-transparent text-foreground placeholder:text-muted-foreground resize-none focus:outline-none disabled:opacity-50"
+          />
+          <MentionAutocomplete
+            users={users}
+            query={mentionQuery ?? ''}
+            anchorRect={mentionQuery !== null ? { top: 0, left: 0 } : null}
+            onSelect={handleMentionSelect}
+            onClose={() => setMentionQuery(null)}
+            visible={mentionQuery !== null}
+          />
+        </div>
 
         <div className="flex items-center justify-between px-2 pb-2">
           <div className="flex items-center gap-0.5 relative">
