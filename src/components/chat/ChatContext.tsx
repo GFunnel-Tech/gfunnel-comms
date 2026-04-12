@@ -22,6 +22,7 @@ interface ChatContextType {
   threadReplies: ChatMessage[];
   sendMessage: (content: string, channelId: string, threadParentId?: string, files?: File[]) => void;
   createChannel: (data: { name: string; description: string; type: ChannelType; emoji: string }) => void;
+  createDM: (userIds: string[]) => void;
   toggleReaction: (messageId: string, emoji: string) => void;
   toggleStar: (channelId: string) => void;
   toggleMute: (channelId: string) => void;
