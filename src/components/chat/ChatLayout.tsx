@@ -43,6 +43,7 @@ function ChatLayoutInner() {
           onCreateFolder={createWorkspaceFolder}
           onRemoveFromFolder={removeWorkspaceFromFolder}
           onDeleteFolder={deleteWorkspaceFolder}
+          onRenameFolder={renameWorkspaceFolder}
         />
       )}
 

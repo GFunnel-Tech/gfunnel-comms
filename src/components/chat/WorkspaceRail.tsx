@@ -354,6 +354,7 @@ export function WorkspaceRail({
                 onSwitch={onSwitch}
                 onRemoveFromFolder={onRemoveFromFolder}
                 onDeleteFolder={onDeleteFolder}
+                onRenameFolder={onRenameFolder}
                 onDragOver={handleDragOverFolder}
                 onDrop={handleDropOnFolder(item.folder.id)}
               />
