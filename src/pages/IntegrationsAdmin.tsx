@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-type Provider = 'whatsapp' | 'telegram' | 'facebook' | 'instagram' | 'linkedin' | 'sms' | 'custom_webhook';
+type Provider = 'whatsapp' | 'telegram' | 'facebook' | 'instagram' | 'linkedin' | 'sms' | 'slack' | 'custom_webhook';
 
 interface Integration {
   id: string;
