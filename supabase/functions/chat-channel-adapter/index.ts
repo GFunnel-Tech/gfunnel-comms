@@ -332,18 +332,24 @@ const slackAdapter: ProviderAdapter = {
   },
 
   async sendMessage(integration: IntegrationRow, recipientId: string, content: string) {
-    const botToken = Deno.env.get(
-      integration.credentials_secret_name || "SLACK_BOT_TOKEN"
-    );
-    if (!botToken) { console.error("Slack bot token not found"); return; }
+    const GATEWAY_URL = "https://connector-gateway.lovable.dev/slack/api";
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const SLACK_API_KEY = Deno.env.get("SLACK_API_KEY");
 
-    const res = await fetch("https://slack.com/api/chat.postMessage", {
+    if (!LOVABLE_API_KEY) { console.error("LOVABLE_API_KEY is not configured"); return; }
+    if (!SLACK_API_KEY) { console.error("SLACK_API_KEY is not configured — connect the Slack connector first"); return; }
+
+    const res = await fetch(`${GATEWAY_URL}/chat.postMessage`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${botToken}`, "Content-Type": "application/json" },
+      headers: {
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "X-Connection-Api-Key": SLACK_API_KEY,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ channel: recipientId, text: content }),
     });
     const data = await res.json();
-    if (!data.ok) console.error("Slack send failed:", data.error);
+    if (!data.ok) console.error(`Slack send failed [${res.status}]:`, JSON.stringify(data));
   },
 };
 
