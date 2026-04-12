@@ -125,7 +125,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     if (channels.length > 0 && !channels.find(c => c.id === activeChannelId)) {
       setActiveChannelIdRaw(channels[0].id);
     }
-  }, [channels]);
+  }, [channels, activeChannelId]);
 
   useEffect(() => {
     if (isLive && activeChannelId) sb.loadMessages(activeChannelId);
