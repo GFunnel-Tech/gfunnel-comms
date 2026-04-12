@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import type { ChatChannel, ChatMessage, ChatUser } from '@/data/chat-types';
+import type { ChatChannel, ChatMessage } from '@/data/chat-types';
 import type { Tables } from '@/integrations/supabase/types';
 
 type DbMessage = Tables<'chat_messages'>;
@@ -23,7 +23,7 @@ function dbMsgToChat(m: DbMessage): ChatMessage {
     workspace_id: m.workspace_id,
     channel_id: m.channel_id,
     user_id: m.user_id,
-    user_display_name: '', // filled in by context
+    user_display_name: '',
     user_avatar_url: null,
     content: m.content,
     content_html: m.content_html ?? undefined,
@@ -67,7 +67,7 @@ function dbChannelToChat(c: DbChannel, membership?: DbMember): ChatChannel {
     created_by: c.created_by,
     is_archived: c.is_archived,
     is_read_only: c.is_read_only,
-    member_ids: [], // filled separately
+    member_ids: [],
     pinned_message_ids: (c.pinned_message_ids ?? []) as string[],
     last_message_at: c.last_message_at ?? undefined,
     last_message_preview: c.last_message_preview ?? undefined,
@@ -80,6 +80,33 @@ function dbChannelToChat(c: DbChannel, membership?: DbMember): ChatChannel {
     updated_at: c.updated_at,
     unread_count: membership?.unread_count ?? 0,
     is_starred: membership?.is_starred ?? false,
+  };
+}
+
+/** Upload a file to the chat-files storage bucket */
+async function uploadFile(file: File, workspaceId: string, channelId: string): Promise<{
+  url: string; name: string; size: number; type: string; thumbnailUrl?: string;
+} | null> {
+  const ext = file.name.split('.').pop() ?? '';
+  const path = `${workspaceId}/${channelId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+  const { error } = await supabase.storage.from('chat-files').upload(path, file, {
+    cacheControl: '3600',
+    upsert: false,
+  });
+  if (error) {
+    console.error('File upload error:', error);
+    return null;
+  }
+
+  const { data: urlData } = supabase.storage.from('chat-files').getPublicUrl(path);
+
+  return {
+    url: urlData.publicUrl,
+    name: file.name,
+    size: file.size,
+    type: file.type,
+    thumbnailUrl: file.type.startsWith('image/') ? urlData.publicUrl : undefined,
   };
 }
 
@@ -128,17 +155,61 @@ export function useSupabaseChat(workspaceId: string, userId: string) {
     }
   }, []);
 
-  // Send message
-  const sendMessage = useCallback(async (content: string, channelId: string, threadParentId?: string) => {
+  // Send message with optional file attachments
+  const sendMessage = useCallback(async (
+    content: string,
+    channelId: string,
+    threadParentId?: string,
+    files?: File[]
+  ) => {
+    // Upload files first if any
+    let fileData: Awaited<ReturnType<typeof uploadFile>> = null;
+    if (files && files.length > 0) {
+      // Upload the first file (for single-file messages) or build content for multi-file
+      fileData = await uploadFile(files[0], workspaceId, channelId);
+    }
+
+    const msgType = fileData
+      ? (fileData.type.startsWith('image/') ? 'image' : 'file')
+      : 'text';
+
     const { error } = await supabase.from('chat_messages').insert({
       workspace_id: workspaceId,
       channel_id: channelId,
       user_id: userId,
       content,
       thread_parent_id: threadParentId ?? null,
+      type: msgType,
+      file_url: fileData?.url ?? null,
+      file_name: fileData?.name ?? null,
+      file_size: fileData?.size ?? null,
+      file_type: fileData?.type ?? null,
+      file_thumbnail_url: fileData?.thumbnailUrl ?? null,
     });
 
     if (error) console.error('Send message error:', error);
+
+    // If there are additional files (2+), send each as a separate message
+    if (files && files.length > 1) {
+      for (let i = 1; i < files.length; i++) {
+        const fd = await uploadFile(files[i], workspaceId, channelId);
+        if (fd) {
+          await supabase.from('chat_messages').insert({
+            workspace_id: workspaceId,
+            channel_id: channelId,
+            user_id: userId,
+            content: fd.name,
+            thread_parent_id: threadParentId ?? null,
+            type: fd.type.startsWith('image/') ? 'image' : 'file',
+            file_url: fd.url,
+            file_name: fd.name,
+            file_size: fd.size,
+            file_type: fd.type,
+            file_thumbnail_url: fd.thumbnailUrl ?? null,
+          });
+        }
+      }
+    }
 
     // Update parent thread count if replying
     if (threadParentId) {
@@ -196,7 +267,6 @@ export function useSupabaseChat(workspaceId: string, userId: string) {
   useEffect(() => {
     if (!workspaceId) return;
 
-    // Messages realtime
     const msgChannel = supabase
       .channel('chat-messages-realtime')
       .on('postgres_changes', {
@@ -221,7 +291,6 @@ export function useSupabaseChat(workspaceId: string, userId: string) {
       })
       .subscribe();
 
-    // Channels realtime
     const chChannel = supabase
       .channel('chat-channels-realtime')
       .on('postgres_changes', {

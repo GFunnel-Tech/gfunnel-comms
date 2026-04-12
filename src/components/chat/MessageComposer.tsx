@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, KeyboardEvent, DragEvent } from 'react';
 import { useChatContext } from './ChatContext';
 import { Button } from '@/components/ui/button';
-import { Bold, Italic, Code, Paperclip, Smile, SendHorizonal, X, FileIcon, ImageIcon } from 'lucide-react';
+import { Bold, Italic, Code, Paperclip, Smile, SendHorizonal, X, FileIcon, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EmojiPicker } from './EmojiPicker';
 import { TypingIndicator } from './TypingIndicator';
@@ -24,6 +24,7 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
   const [files, setFiles] = useState<FilePreview[]>([]);
   const [showEmoji, setShowEmoji] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounterRef = useRef(0);
@@ -64,21 +65,22 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
     });
   }, []);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const trimmed = value.trim();
-    if (!trimmed && files.length === 0) return;
+    if ((!trimmed && files.length === 0) || isSending) return;
 
-    // Build message content with file references
-    let content = trimmed;
-    if (files.length > 0) {
-      const fileNames = files.map(f => `📎 ${f.file.name}`).join('\n');
-      content = content ? `${content}\n\n${fileNames}` : fileNames;
+    setIsSending(true);
+    try {
+      const fileObjects = files.length > 0 ? files.map(f => f.file) : undefined;
+      const content = trimmed || (files.length > 0 ? files.map(f => f.file.name).join(', ') : '');
+
+      await sendMessage(content, channelId, threadParentId, fileObjects);
+      setValue('');
+      setFiles([]);
+      textareaRef.current?.focus();
+    } finally {
+      setIsSending(false);
     }
-
-    sendMessage(content, channelId, threadParentId);
-    setValue('');
-    setFiles([]);
-    textareaRef.current?.focus();
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -221,26 +223,27 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
           onKeyDown={handleKeyDown}
           placeholder={placeholder || defaultPlaceholder}
           rows={1}
-          className="w-full px-3 pt-3 pb-2 text-sm bg-transparent text-foreground placeholder:text-muted-foreground resize-none focus:outline-none"
+          disabled={isSending}
+          className="w-full px-3 pt-3 pb-2 text-sm bg-transparent text-foreground placeholder:text-muted-foreground resize-none focus:outline-none disabled:opacity-50"
         />
 
         <div className="flex items-center justify-between px-2 pb-2">
           <div className="flex items-center gap-0.5 relative">
             <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground"
-              onClick={() => insertMarkdown('**', '**')}>
+              onClick={() => insertMarkdown('**', '**')} disabled={isSending}>
               <Bold className="w-3.5 h-3.5" />
             </Button>
             <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground"
-              onClick={() => insertMarkdown('_', '_')}>
+              onClick={() => insertMarkdown('_', '_')} disabled={isSending}>
               <Italic className="w-3.5 h-3.5" />
             </Button>
             <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground"
-              onClick={() => insertMarkdown('`', '`')}>
+              onClick={() => insertMarkdown('`', '`')} disabled={isSending}>
               <Code className="w-3.5 h-3.5" />
             </Button>
             <div className="w-px h-4 bg-border mx-1" />
             <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground"
-              onClick={() => fileInputRef.current?.click()}>
+              onClick={() => fileInputRef.current?.click()} disabled={isSending}>
               <Paperclip className="w-3.5 h-3.5" />
             </Button>
             <input
@@ -253,7 +256,7 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
             />
             <div className="relative">
               <Button variant="ghost" size="icon" className={cn('h-7 w-7', showEmoji ? 'text-primary' : 'text-muted-foreground')}
-                onClick={() => setShowEmoji(!showEmoji)}>
+                onClick={() => setShowEmoji(!showEmoji)} disabled={isSending}>
                 <Smile className="w-3.5 h-3.5" />
               </Button>
               {showEmoji && (
@@ -265,8 +268,8 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
             </div>
           </div>
           <Button size="icon" className={cn('h-7 w-7', hasContent ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}
-            disabled={!hasContent} onClick={handleSend}>
-            <SendHorizonal className="w-3.5 h-3.5" />
+            disabled={!hasContent || isSending} onClick={handleSend}>
+            {isSending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <SendHorizonal className="w-3.5 h-3.5" />}
           </Button>
         </div>
       </div>
