@@ -16,16 +16,17 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword.tsx"));
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, isEmbedded } = useAuth();
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
-  if (!user) return <Navigate to="/auth" replace />;
+  // When embedded in GFunnel, allow access even without a session (demo mode fallback)
+  if (!user && !isEmbedded) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 }
 
 function PublicOnlyRoute({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, isEmbedded } = useAuth();
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
-  if (user) return <Navigate to="/" replace />;
+  if (user || isEmbedded) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
