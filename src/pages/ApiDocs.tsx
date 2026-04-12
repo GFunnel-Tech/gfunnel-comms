@@ -51,9 +51,10 @@ interface TryItConfig {
   description: string;
 }
 
-function TryItPanel({ config }: { config: TryItConfig }) {
+function TryItPanel({ config, globalApiKey }: { config: TryItConfig; globalApiKey?: string }) {
   const [open, setOpen] = useState(false);
-  const [apiKey, setApiKey] = useState('');
+  const [localApiKey, setLocalApiKey] = useState('');
+  const apiKey = localApiKey || globalApiKey || '';
   const [body, setBody] = useState(config.defaultBody || '');
   const [queryParams, setQueryParams] = useState(
     Object.entries(config.defaultQuery || {}).map(([k, v]) => `${k}=${v}`).join('&')
