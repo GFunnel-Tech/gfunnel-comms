@@ -15,7 +15,7 @@ interface MessageItemProps {
 }
 
 export function MessageItem({ message, isCompact }: MessageItemProps) {
-  const { currentUser, setThreadParentId, toggleReaction, users } = useChatContext();
+  const { currentUser, setThreadParentId, toggleReaction, users, allMessages } = useChatContext();
 
   if (message.type === 'system') {
     return (
@@ -176,25 +176,39 @@ export function MessageItem({ message, isCompact }: MessageItemProps) {
             </div>
           )}
 
-          {/* Thread indicator */}
-          {message.thread_reply_count > 0 && (
-            <button className="flex items-center gap-2 mt-1.5 text-xs text-primary hover:underline group/thread"
-              onClick={() => setThreadParentId(message.id)}>
-              <div className="flex -space-x-1.5">
-                {threadParticipants.map(u => (
-                  <Avatar key={u!.id} className="h-4 w-4 border border-card">
-                    <AvatarFallback className="text-[7px] bg-primary/15 text-primary">{u!.display_name[0]}</AvatarFallback>
-                  </Avatar>
-                ))}
+          {/* Thread indicator with inline reply preview */}
+          {message.thread_reply_count > 0 && (() => {
+            const lastReply = allMessages
+              .filter(m => m.thread_parent_id === message.id)
+              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+            return (
+              <div className="mt-2 rounded-lg border border-border/60 bg-muted/30 overflow-hidden">
+                <button className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-muted/50 transition-colors"
+                  onClick={() => setThreadParentId(message.id)}>
+                  <div className="flex -space-x-1.5 shrink-0">
+                    {threadParticipants.map(u => (
+                      <Avatar key={u!.id} className="h-4 w-4 border border-card">
+                        <AvatarFallback className="text-[7px] bg-primary/15 text-primary">{u!.display_name[0]}</AvatarFallback>
+                      </Avatar>
+                    ))}
+                  </div>
+                  <span className="text-xs font-medium text-primary">{message.thread_reply_count} {message.thread_reply_count === 1 ? 'reply' : 'replies'}</span>
+                  {message.thread_last_reply_at && (
+                    <span className="text-[11px] text-muted-foreground ml-auto">
+                      {format(new Date(message.thread_last_reply_at), 'h:mm a')}
+                    </span>
+                  )}
+                </button>
+                {lastReply && (
+                  <div className="px-3 py-1.5 border-t border-border/40 flex items-start gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => setThreadParentId(message.id)}>
+                    <span className="text-[11px] font-medium text-foreground/70 shrink-0">{lastReply.user_display_name.split(' ')[0]}:</span>
+                    <span className="text-[11px] text-muted-foreground truncate">{lastReply.content.length > 120 ? lastReply.content.slice(0, 120) + '…' : lastReply.content}</span>
+                  </div>
+                )}
               </div>
-              <span>{message.thread_reply_count} {message.thread_reply_count === 1 ? 'reply' : 'replies'}</span>
-              {message.thread_last_reply_at && (
-                <span className="text-muted-foreground">
-                  Last reply {format(new Date(message.thread_last_reply_at), 'h:mm a')}
-                </span>
-              )}
-            </button>
-          )}
+            );
+          })()}
         </div>
       </div>
     </div>
