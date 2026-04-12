@@ -1,10 +1,12 @@
 import { useChatContext } from './ChatContext';
-import { Hash, Lock, ChevronDown, ChevronRight, Search, Plus, MessageSquare, Settings, Menu, Star, Megaphone, Zap } from 'lucide-react';
+import { Hash, Lock, ChevronDown, ChevronRight, Search, Plus, MessageSquare, Settings, Menu, Star, Megaphone, Zap, ChevronsUpDown } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { DEPARTMENT_COLORS, type Department } from '@/data/chat-types';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useState } from 'react';
 
 const statusColors: Record<string, string> = {
@@ -34,7 +36,8 @@ function getChannelIcon(type: string, emoji: string) {
 }
 
 export function ChatSidebar() {
-  const { channels, activeChannelId, setActiveChannelId, currentUser, users, setSearchOpen, sidebarCollapsed, setSidebarCollapsed, setRightPanel, setMobileSidebarOpen, activeWorkspaceName } = useChatContext();
+  const { channels, activeChannelId, setActiveChannelId, currentUser, users, setSearchOpen, sidebarCollapsed, setSidebarCollapsed, setRightPanel, setMobileSidebarOpen, activeWorkspaceName, workspaces, activeWorkspaceId, switchWorkspace } = useChatContext();
+  const showRail = useMediaQuery('(min-width: 900px)');
   const [starredOpen, setStarredOpen] = useState(true);
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
@@ -99,8 +102,37 @@ export function ChatSidebar() {
       {/* Header */}
       <div className="p-3 border-b border-sidebar-border">
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <h2 className="font-heading font-bold text-sm text-foreground">{activeWorkspaceName}</h2>
+          <div className="flex items-center gap-2 min-w-0">
+            {!showRail ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1.5 min-w-0 hover:bg-sidebar-accent rounded px-1 py-0.5 transition-colors">
+                    <h2 className="font-heading font-bold text-sm text-foreground truncate">{activeWorkspaceName}</h2>
+                    <ChevronsUpDown className="w-3 h-3 text-sidebar-foreground shrink-0" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-52">
+                  {workspaces.map(ws => (
+                    <DropdownMenuItem key={ws.workspace_id}
+                      className={cn('gap-2', ws.workspace_id === activeWorkspaceId && 'bg-primary/10 text-primary')}
+                      onClick={() => switchWorkspace(ws.workspace_id)}>
+                      <span className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                        style={{ backgroundColor: ws.workspace_color || 'hsl(var(--primary))' }}>
+                        {ws.workspace_name.charAt(0)}
+                      </span>
+                      <span className="truncate">{ws.workspace_name}</span>
+                      {(ws.total_unread ?? 0) > 0 && (
+                        <span className="ml-auto bg-primary text-primary-foreground text-[10px] font-bold rounded-full px-1.5 min-w-[18px] text-center">
+                          {ws.total_unread}
+                        </span>
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <h2 className="font-heading font-bold text-sm text-foreground truncate">{activeWorkspaceName}</h2>
+            )}
           </div>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" className="h-7 w-7 text-sidebar-foreground" onClick={() => setSidebarCollapsed(true)}>
