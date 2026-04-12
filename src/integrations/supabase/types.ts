@@ -274,6 +274,54 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_workspace_connections: {
+        Row: {
+          has_mention: boolean | null
+          id: string
+          is_active: boolean | null
+          joined_at: string | null
+          last_active_at: string | null
+          sort_order: number | null
+          total_unread: number | null
+          user_id: string
+          workspace_color: string | null
+          workspace_id: string
+          workspace_logo_url: string | null
+          workspace_name: string
+          workspace_type: string
+        }
+        Insert: {
+          has_mention?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          last_active_at?: string | null
+          sort_order?: number | null
+          total_unread?: number | null
+          user_id: string
+          workspace_color?: string | null
+          workspace_id: string
+          workspace_logo_url?: string | null
+          workspace_name: string
+          workspace_type?: string
+        }
+        Update: {
+          has_mention?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          last_active_at?: string | null
+          sort_order?: number | null
+          total_unread?: number | null
+          user_id?: string
+          workspace_color?: string | null
+          workspace_id?: string
+          workspace_logo_url?: string | null
+          workspace_name?: string
+          workspace_type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
