@@ -21,7 +21,7 @@ interface MessageComposerProps {
 }
 
 export function MessageComposer({ channelId, threadParentId, placeholder }: MessageComposerProps) {
-  const { sendMessage, channels } = useChatContext();
+  const { sendMessage, channels, users } = useChatContext();
   const [value, setValue] = useState('');
   const [files, setFiles] = useState<FilePreview[]>([]);
   const [showEmoji, setShowEmoji] = useState(false);
