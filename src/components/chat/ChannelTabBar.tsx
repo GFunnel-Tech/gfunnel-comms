@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react';
 import { useChatContext } from './ChatContext';
 import { useActiveTabContext } from './ActiveTabContext';
 import { MessageSquare, Pin, FileText, Users, Plus, X, Settings2 } from 'lucide-react';
+import { PinnedTab } from './tabs/PinnedTab';
+import { FilesTab } from './tabs/FilesTab';
+import { MembersTab } from './tabs/MembersTab';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -146,8 +149,11 @@ export function ChannelTabBar() {
         </DropdownMenu>
       </div>
 
-      {/* Active tab content placeholder for non-messages tabs */}
-      {activeTab !== 'messages' && (
+      {/* Active tab content for non-messages tabs */}
+      {activeTab === 'pinned' && <PinnedTab />}
+      {activeTab === 'files' && <FilesTab />}
+      {activeTab === 'members' && <MembersTab />}
+      {activeTab !== 'messages' && activeTab !== 'pinned' && activeTab !== 'files' && activeTab !== 'members' && (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-2">
             <div className="text-3xl">
@@ -157,25 +163,11 @@ export function ChannelTabBar() {
                 if (tab.type === 'preset' && tab.icon) return null;
                 return tab.icon || '📋';
               })()}
-              {(() => {
-                const tab = tabs.find(t => t.id === activeTab);
-                if (tab?.type === 'preset' && tab.icon) {
-                  return <div className="w-10 h-10 mx-auto rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
-                    {PRESET_ICONS[tab.icon]}
-                  </div>;
-                }
-                return null;
-              })()}
             </div>
             <p className="text-sm font-medium text-foreground">
               {tabs.find(t => t.id === activeTab)?.label}
             </p>
-            <p className="text-xs text-muted-foreground">
-              {activeTab === 'pinned' && 'Pinned messages will appear here'}
-              {activeTab === 'files' && 'Shared files will appear here'}
-              {activeTab === 'members' && 'Channel members will appear here'}
-              {tabs.find(t => t.id === activeTab)?.type === 'custom' && 'Custom tab content — coming soon'}
-            </p>
+            <p className="text-xs text-muted-foreground">Custom tab content — coming soon</p>
           </div>
         </div>
       )}
