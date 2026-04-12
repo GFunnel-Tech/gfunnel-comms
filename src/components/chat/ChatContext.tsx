@@ -49,6 +49,8 @@ interface ChatContextType {
   removeWorkspaceFromFolder: (folderId: string, workspaceId: string) => void;
   deleteWorkspaceFolder: (folderId: string) => void;
   renameWorkspaceFolder: (folderId: string, newName: string) => void;
+  hoveredMessageId: string | null;
+  setHoveredMessageId: (id: string | null) => void;
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);
@@ -144,6 +146,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   // Demo mode state
   const [demoAllMessages, setDemoAllMessages] = useState<ChatMessage[]>(demoMessages);
   const [demoChannelList, setDemoChannelList] = useState<ChatChannel[]>(demoChannels);
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
 
   // UI state
   const [activeChannelId, setActiveChannelIdRaw] = useState('ch-general');
@@ -357,6 +360,22 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isLive]);
 
+  // Keyboard shortcut: R to reply to hovered message
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'r' || e.key === 'R') {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+        if (hoveredMessageId) {
+          e.preventDefault();
+          handleSetThreadParentId(hoveredMessageId);
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [hoveredMessageId, handleSetThreadParentId]);
+
   return (
     <ChatContext.Provider value={{
       currentUser, users, channels,
@@ -370,6 +389,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       isLive, loading: isLive ? sb.loading : false,
       workspaces, activeWorkspaceId, activeWorkspaceName, switchWorkspace,
       reorderWorkspaces, workspaceFolders, createWorkspaceFolder, removeWorkspaceFromFolder, deleteWorkspaceFolder, renameWorkspaceFolder,
+      hoveredMessageId, setHoveredMessageId,
     }}>
       {children}
     </ChatContext.Provider>
