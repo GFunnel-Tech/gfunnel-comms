@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound.tsx";
 import { lazy, Suspense } from "react";
 
 const ApiDocs = lazy(() => import("./pages/ApiDocs.tsx"));
+const IntegrationsAdmin = lazy(() => import("./pages/IntegrationsAdmin.tsx"));
 
 const queryClient = new QueryClient();
 
