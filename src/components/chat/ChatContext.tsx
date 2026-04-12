@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { ChatChannel, ChatMessage, ChatUser } from '@/data/chat-types';
-import { demoChannels, demoMessages, demoUsers, currentDemoUser, getChannelMessages, getThreadReplies } from '@/data/chat-demo-data';
+import { demoChannels, demoMessages, demoUsers, currentDemoUser } from '@/data/chat-demo-data';
+
+type RightPanel = 'none' | 'thread' | 'ai';
 
 interface ChatContextType {
   currentUser: ChatUser;
@@ -9,6 +11,7 @@ interface ChatContextType {
   activeChannelId: string;
   setActiveChannelId: (id: string) => void;
   messages: ChatMessage[];
+  allMessages: ChatMessage[];
   threadParentId: string | null;
   setThreadParentId: (id: string | null) => void;
   threadReplies: ChatMessage[];
@@ -20,6 +23,8 @@ interface ChatContextType {
   setSearchOpen: (open: boolean) => void;
   sidebarCollapsed: boolean;
   setSidebarCollapsed: (v: boolean) => void;
+  rightPanel: RightPanel;
+  setRightPanel: (p: RightPanel) => void;
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);
@@ -32,12 +37,13 @@ export function useChatContext() {
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [allMessages, setAllMessages] = useState<ChatMessage[]>(demoMessages);
-  const [channels, setChannels] = useState<ChatChannel[]>(demoChannels);
+  const [channels] = useState<ChatChannel[]>(demoChannels);
   const [activeChannelId, setActiveChannelId] = useState('ch-general');
   const [threadParentId, setThreadParentId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [rightPanel, setRightPanel] = useState<RightPanel>('none');
 
   const messages = useMemo(
     () => allMessages.filter(m => m.channel_id === activeChannelId && !m.thread_parent_id)
@@ -53,14 +59,20 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     [allMessages, threadParentId]
   );
 
+  const handleSetThreadParentId = useCallback((id: string | null) => {
+    setThreadParentId(id);
+    setRightPanel(id ? 'thread' : 'none');
+  }, []);
+
   const sendMessage = useCallback((content: string, channelId: string, parentId?: string) => {
     const now = new Date().toISOString();
     const newMsg: ChatMessage = {
       id: `msg-${Date.now()}`, workspace_id: 'demo-workspace', channel_id: channelId,
       user_id: currentDemoUser.id, user_display_name: currentDemoUser.display_name,
-      user_avatar_url: currentDemoUser.avatar_url, content, type: 'text',
-      thread_parent_id: parentId, thread_reply_count: 0, is_edited: false,
-      is_deleted: false, pinned: false, reactions: {}, mentions: [],
+      user_avatar_url: currentDemoUser.avatar_url, content, type: 'text', source: 'user',
+      thread_parent_id: parentId, thread_reply_count: 0, thread_participant_ids: [],
+      is_edited: false, is_deleted: false, pinned: false, reactions: {},
+      mentions: [], channel_mentions: [], context_links: [], metadata: {},
       created_at: now, updated_at: now,
     };
     setAllMessages(prev => {
@@ -70,6 +82,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           ...m,
           thread_reply_count: m.thread_reply_count + 1,
           thread_last_reply_at: now,
+          thread_participant_ids: [...new Set([...m.thread_participant_ids, currentDemoUser.id])],
         } : m);
       }
       return updated;
@@ -94,11 +107,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   return (
     <ChatContext.Provider value={{
       currentUser: currentDemoUser, users: demoUsers, channels,
-      activeChannelId, setActiveChannelId, messages,
-      threadParentId, setThreadParentId, threadReplies,
+      activeChannelId, setActiveChannelId, messages, allMessages,
+      threadParentId, setThreadParentId: handleSetThreadParentId, threadReplies,
       sendMessage, toggleReaction,
       searchQuery, setSearchQuery, searchOpen, setSearchOpen,
       sidebarCollapsed, setSidebarCollapsed,
+      rightPanel, setRightPanel,
     }}>
       {children}
     </ChatContext.Provider>

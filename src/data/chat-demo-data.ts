@@ -1,56 +1,75 @@
-import { ChatUser, ChatChannel, ChatMessage } from './chat-types';
+import { ChatUser, ChatChannel, ChatMessage, ChatBookmark } from './chat-types';
 
 const WS = 'demo-workspace';
+const ALL_MEMBERS = ['user-1','user-2','user-3','user-4','user-5'];
 
 export const demoUsers: ChatUser[] = [
-  { id: 'user-1', display_name: 'Cameron G.', avatar_url: null, email: 'cameron@gfunnel.com', status: 'online', status_text: 'Building things' },
-  { id: 'user-2', display_name: 'Sarah Chen', avatar_url: null, email: 'sarah@gfunnel.com', status: 'online' },
-  { id: 'user-3', display_name: 'Tim Miller', avatar_url: null, email: 'tim@gfunnel.com', status: 'away', status_text: 'In a meeting' },
-  { id: 'user-4', display_name: 'Alex Rivera', avatar_url: null, email: 'alex@gfunnel.com', status: 'offline' },
-  { id: 'user-5', display_name: 'Jordan Lee', avatar_url: null, email: 'jordan@gfunnel.com', status: 'dnd', status_text: 'Deep work' },
+  { id: 'user-1', display_name: 'Cameron G.', avatar_url: null, email: 'cameron@gfunnel.com', status: 'online', status_text: 'Building things', role: 'admin' },
+  { id: 'user-2', display_name: 'Sarah Chen', avatar_url: null, email: 'sarah@gfunnel.com', status: 'online', role: 'member' },
+  { id: 'user-3', display_name: 'Tim Miller', avatar_url: null, email: 'tim@gfunnel.com', status: 'away', status_text: 'In a meeting', role: 'member' },
+  { id: 'user-4', display_name: 'Alex Rivera', avatar_url: null, email: 'alex@gfunnel.com', status: 'offline', role: 'member' },
+  { id: 'user-5', display_name: 'Jordan Lee', avatar_url: null, email: 'jordan@gfunnel.com', status: 'dnd', status_text: 'Deep work', role: 'member' },
 ];
 
 export const currentDemoUser = demoUsers[0];
 
 export const demoChannels: ChatChannel[] = [
   {
-    id: 'ch-general', workspace_id: WS, name: 'general', description: 'General discussion for the team',
-    type: 'public', created_by: 'user-1', is_archived: false,
-    member_ids: ['user-1','user-2','user-3','user-4','user-5'],
-    pinned_message_ids: ['msg-g-3'], last_message_at: '2026-04-12T08:30:00Z',
-    last_message_preview: 'Sounds great, let\'s sync up later!',
-    created_at: '2026-01-01T00:00:00Z', updated_at: '2026-04-12T08:30:00Z', unread_count: 3,
+    id: 'ch-general', workspace_id: WS, name: 'general', description: 'Open team communication',
+    type: 'public', created_by: 'user-1', is_archived: false, is_read_only: false,
+    member_ids: ALL_MEMBERS, pinned_message_ids: ['msg-g-3'], emoji: '💬',
+    last_message_at: '2026-04-12T08:30:00Z', last_message_preview: 'Sounds great!',
+    message_count: 42, sort_order: 0,
+    linked_module_slug: 'crm-pipeline', linked_module_label: 'CRM Pipeline',
+    created_at: '2026-01-01T00:00:00Z', updated_at: '2026-04-12T08:30:00Z',
+    unread_count: 3, is_starred: true,
   },
   {
-    id: 'ch-announce', workspace_id: WS, name: 'announcements', description: 'Important company announcements',
-    type: 'public', created_by: 'user-1', is_archived: false,
-    member_ids: ['user-1','user-2','user-3','user-4','user-5'],
-    pinned_message_ids: [], last_message_at: '2026-04-11T14:00:00Z',
-    last_message_preview: 'New feature launch next week!',
+    id: 'ch-announce', workspace_id: WS, name: 'announcements', description: 'Important company updates',
+    type: 'announcement', created_by: 'user-1', is_archived: false, is_read_only: true,
+    member_ids: ALL_MEMBERS, pinned_message_ids: ['msg-a-2'], emoji: '📢',
+    last_message_at: '2026-04-11T14:00:00Z', last_message_preview: 'New feature launch next week!',
+    message_count: 8, sort_order: 1,
     created_at: '2026-01-01T00:00:00Z', updated_at: '2026-04-11T14:00:00Z', unread_count: 0,
   },
   {
+    id: 'ch-revenue', workspace_id: WS, name: 'revenue-gen', description: 'Sales, marketing, and partnerships',
+    type: 'department', department: 'Revenue Generation', created_by: 'user-1', is_archived: false,
+    is_read_only: false, member_ids: ALL_MEMBERS, pinned_message_ids: [], emoji: '📈',
+    last_message_at: '2026-04-12T06:00:00Z', last_message_preview: 'Q2 pipeline looking strong',
+    message_count: 25, sort_order: 2,
+    created_at: '2026-01-01T00:00:00Z', updated_at: '2026-04-12T06:00:00Z', unread_count: 2,
+  },
+  {
+    id: 'ch-tech', workspace_id: WS, name: 'technology', description: 'Development, automations, integrations',
+    type: 'department', department: 'Technology', created_by: 'user-1', is_archived: false,
+    is_read_only: false, member_ids: ALL_MEMBERS, pinned_message_ids: [], emoji: '💻',
+    last_message_at: '2026-04-12T07:00:00Z', last_message_preview: 'Deploy went smooth',
+    message_count: 38, sort_order: 3,
+    created_at: '2026-01-01T00:00:00Z', updated_at: '2026-04-12T07:00:00Z', unread_count: 0,
+  },
+  {
     id: 'ch-random', workspace_id: WS, name: 'random', description: 'Off-topic fun and watercooler chat',
-    type: 'public', created_by: 'user-2', is_archived: false,
-    member_ids: ['user-1','user-2','user-3','user-4','user-5'],
-    pinned_message_ids: [], last_message_at: '2026-04-12T07:15:00Z',
-    last_message_preview: 'Anyone seen that new show?',
+    type: 'public', created_by: 'user-2', is_archived: false, is_read_only: false,
+    member_ids: ALL_MEMBERS, pinned_message_ids: [], emoji: '🎲',
+    last_message_at: '2026-04-12T07:15:00Z', last_message_preview: 'Anyone seen that new show?',
+    message_count: 19, sort_order: 4,
     created_at: '2026-01-01T00:00:00Z', updated_at: '2026-04-12T07:15:00Z', unread_count: 1,
   },
   {
     id: 'dm-sarah', workspace_id: WS, name: 'Sarah Chen',
-    type: 'dm', created_by: 'user-1', is_archived: false,
-    member_ids: ['user-1','user-2'], pinned_message_ids: [],
-    last_message_at: '2026-04-12T09:00:00Z',
-    last_message_preview: 'Can you review the PR?',
+    type: 'dm', created_by: 'user-1', is_archived: false, is_read_only: false,
+    member_ids: ['user-1','user-2'], pinned_message_ids: [], emoji: '',
+    last_message_at: '2026-04-12T09:00:00Z', last_message_preview: 'Can you review the PR?',
+    message_count: 5, sort_order: 0,
     created_at: '2026-03-01T00:00:00Z', updated_at: '2026-04-12T09:00:00Z', unread_count: 1,
   },
   {
     id: 'dm-tim', workspace_id: WS, name: 'Tim Miller',
-    type: 'dm', created_by: 'user-3', is_archived: false,
-    member_ids: ['user-1','user-3'], pinned_message_ids: [],
-    last_message_at: '2026-04-11T16:30:00Z',
-    last_message_preview: 'Thanks for the update!',
+    type: 'dm', created_by: 'user-3', is_archived: false, is_read_only: false,
+    member_ids: ['user-1','user-3'], pinned_message_ids: [], emoji: '',
+    last_message_at: '2026-04-11T16:30:00Z', last_message_preview: 'Thanks for the update!',
+    message_count: 4, sort_order: 1,
     created_at: '2026-03-15T00:00:00Z', updated_at: '2026-04-11T16:30:00Z', unread_count: 0,
   },
 ];
@@ -59,14 +78,19 @@ function msg(id: string, channelId: string, userId: string, content: string, cre
   const user = demoUsers.find(u => u.id === userId)!;
   return {
     id, workspace_id: WS, channel_id: channelId, user_id: userId,
-    user_display_name: user.display_name, user_avatar_url: user.avatar_url,
-    content, type: 'text', thread_reply_count: 0, is_edited: false,
-    is_deleted: false, pinned: false, reactions: {}, mentions: [],
+    user_display_name: user?.display_name ?? 'System', user_avatar_url: user?.avatar_url ?? null,
+    content, type: 'text', source: 'user', thread_reply_count: 0,
+    thread_participant_ids: [], is_edited: false, is_deleted: false,
+    pinned: false, reactions: {}, mentions: [], channel_mentions: [],
+    context_links: [], metadata: {},
     created_at: createdAt, updated_at: createdAt, ...extra,
   };
 }
 
 export const demoMessages: ChatMessage[] = [
+  // System message
+  { id: 'msg-sys-1', workspace_id: WS, channel_id: 'ch-general', user_id: 'system', user_display_name: 'System', user_avatar_url: null, content: '🎉 Acme Corp just started using GFunnel Chat!', type: 'system', source: 'system', thread_reply_count: 0, thread_participant_ids: [], is_edited: false, is_deleted: false, pinned: false, reactions: {}, mentions: [], channel_mentions: [], context_links: [], metadata: {}, created_at: '2026-04-09T10:00:00Z', updated_at: '2026-04-09T10:00:00Z' },
+
   // #general
   msg('msg-g-1', 'ch-general', 'user-1', 'Good morning team! 🌅 Ready for another productive day?', '2026-04-12T07:00:00Z'),
   msg('msg-g-2', 'ch-general', 'user-2', 'Morning! I just pushed the latest design updates to the staging branch.', '2026-04-12T07:05:00Z', {
@@ -74,7 +98,9 @@ export const demoMessages: ChatMessage[] = [
   }),
   msg('msg-g-3', 'ch-general', 'user-1', 'Great work Sarah! The new dashboard looks amazing. Let me share this with the stakeholders.', '2026-04-12T07:08:00Z', {
     pinned: true, pinned_by: 'user-1',
-    thread_reply_count: 3, thread_last_reply_at: '2026-04-12T07:30:00Z',
+    thread_reply_count: 3, thread_participant_ids: ['user-2', 'user-4', 'user-1'],
+    thread_last_reply_at: '2026-04-12T07:30:00Z',
+    context_links: [{ type: 'module', slug: 'crm-pipeline', label: 'CRM Pipeline: Q2 Dashboard', url: '/crm' }],
   }),
   msg('msg-g-4', 'ch-general', 'user-3', 'I\'ll be in a meeting from 10-11 but available after that for the sync.', '2026-04-12T07:15:00Z'),
   msg('msg-g-5', 'ch-general', 'user-3', 'Also, has anyone looked into the caching issue from yesterday?', '2026-04-12T07:16:00Z'),
@@ -85,12 +111,29 @@ export const demoMessages: ChatMessage[] = [
   msg('msg-g-8', 'ch-general', 'user-2', 'Quick update: the design system docs are now live at /docs/design. Please take a look and let me know if anything needs adjusting.', '2026-04-12T08:00:00Z', {
     reactions: { '👀': ['user-1', 'user-3', 'user-5'] }
   }),
+
+  // AI message in #general
+  {
+    ...msg('msg-g-ai', 'ch-general', 'user-1', 'Based on the last 20 messages in this channel, here\'s a summary:\n\n**Key Updates:**\n• Design system docs are now live\n• Redis caching issue resolved by Jordan\n• Client approved the new onboarding flow\n• Q2 dashboard shared with stakeholders\n\n**Action Items:**\n• Team sync after Tim\'s 10-11 meeting\n• Review design system docs\n• Prepare for feature launch next week', '2026-04-12T08:10:00Z'),
+    type: 'ai', source: 'ai', user_display_name: 'GFunnel AI', user_id: 'ai',
+    reactions: { '🙌': ['user-1', 'user-2'] },
+  },
+
   msg('msg-g-9', 'ch-general', 'user-1', 'Just had a call with the client — they love the new onboarding flow! Huge kudos to everyone involved. 🏆', '2026-04-12T08:15:00Z', {
     reactions: { '🎉': ['user-2', 'user-3', 'user-4', 'user-5'], '❤️': ['user-2'] }
   }),
+
+  // Automation message in #general
+  {
+    ...msg('msg-g-auto', 'ch-general', 'user-1', '**New Lead Alert** — Tim Morrison just submitted a contact form.\n\nPhone: 555-0100 | Email: tim@emm.com\nSource: Meta Ads | BEAS Score: 87/100', '2026-04-12T08:20:00Z'),
+    type: 'automation', source: 'n8n', user_display_name: 'n8n Automation', user_id: 'n8n',
+    metadata: { workflow_name: 'New Lead Alert', trigger_event: 'form_submission' },
+    reactions: { '👀': ['user-1'] },
+  },
+
   msg('msg-g-10', 'ch-general', 'user-4', 'Sounds great, let\'s sync up later!', '2026-04-12T08:30:00Z'),
 
-  // #general thread replies on msg-g-3
+  // Thread replies on msg-g-3
   msg('msg-g-t1', 'ch-general', 'user-2', 'Thanks! I focused on the data visualization components.', '2026-04-12T07:12:00Z', { thread_parent_id: 'msg-g-3' }),
   msg('msg-g-t2', 'ch-general', 'user-4', 'The chart animations are really smooth 👏', '2026-04-12T07:20:00Z', { thread_parent_id: 'msg-g-3' }),
   msg('msg-g-t3', 'ch-general', 'user-1', 'Stakeholders confirmed — they want to ship it next week!', '2026-04-12T07:30:00Z', { thread_parent_id: 'msg-g-3' }),
@@ -100,11 +143,30 @@ export const demoMessages: ChatMessage[] = [
     reactions: { '👍': ['user-2', 'user-3', 'user-4', 'user-5'] }
   }),
   msg('msg-a-2', 'ch-announce', 'user-1', '🚀 **New Feature Launch**: The AI Assistant module is going live next Monday! Please test it on staging this week.', '2026-04-11T14:00:00Z', {
+    pinned: true, pinned_by: 'user-1',
     reactions: { '🎉': ['user-2', 'user-3'], '🚀': ['user-4', 'user-5'] },
-    thread_reply_count: 2, thread_last_reply_at: '2026-04-11T15:00:00Z',
+    thread_reply_count: 2, thread_participant_ids: ['user-2', 'user-5'],
+    thread_last_reply_at: '2026-04-11T15:00:00Z',
   }),
   msg('msg-a-t1', 'ch-announce', 'user-2', 'I\'ll run through the QA checklist today', '2026-04-11T14:30:00Z', { thread_parent_id: 'msg-a-2' }),
   msg('msg-a-t2', 'ch-announce', 'user-5', 'Edge cases documented in the wiki', '2026-04-11T15:00:00Z', { thread_parent_id: 'msg-a-2' }),
+
+  // #revenue-gen
+  msg('msg-rev-1', 'ch-revenue', 'user-1', 'Q2 pipeline is looking strong — we\'re at $340K in qualified leads.', '2026-04-12T05:30:00Z', {
+    reactions: { '🔥': ['user-2', 'user-3'] },
+    context_links: [{ type: 'module', slug: 'crm-pipeline', label: 'CRM Pipeline: Q2 Overview', url: '/crm' }],
+  }),
+  msg('msg-rev-2', 'ch-revenue', 'user-3', 'The Meta Ads campaign is converting at 4.2% — best we\'ve seen.', '2026-04-12T05:45:00Z'),
+  msg('msg-rev-3', 'ch-revenue', 'user-2', 'Can we double the budget on that campaign? The ROAS is incredible.', '2026-04-12T06:00:00Z', {
+    reactions: { '💯': ['user-1', 'user-3'] }
+  }),
+
+  // #technology
+  msg('msg-tech-1', 'ch-tech', 'user-5', 'Just deployed v2.4.1 — includes the WebSocket fix and the new caching layer.', '2026-04-12T06:30:00Z', {
+    reactions: { '🚀': ['user-1', 'user-2', 'user-4'] }
+  }),
+  msg('msg-tech-2', 'ch-tech', 'user-4', 'All integration tests passing. Zero regressions. 🎯', '2026-04-12T06:45:00Z'),
+  msg('msg-tech-3', 'ch-tech', 'user-5', 'Deploy went smooth — monitoring looks clean so far.', '2026-04-12T07:00:00Z'),
 
   // #random
   msg('msg-r-1', 'ch-random', 'user-4', 'Has anyone tried the new coffee place on 5th? ☕', '2026-04-11T12:00:00Z'),
@@ -129,9 +191,10 @@ export const demoMessages: ChatMessage[] = [
   msg('msg-dm-t2', 'dm-tim', 'user-3', 'Going well! I finished the auth endpoints. Working on the webhook handlers now.', '2026-04-11T15:15:00Z'),
   msg('msg-dm-t3', 'dm-tim', 'user-1', 'Awesome. Let me know if you need help with the webhook payload validation.', '2026-04-11T16:00:00Z'),
   msg('msg-dm-t4', 'dm-tim', 'user-3', 'Thanks for the update!', '2026-04-11T16:30:00Z'),
+];
 
-  // System message
-  { id: 'msg-sys-1', workspace_id: WS, channel_id: 'ch-general', user_id: 'system', user_display_name: 'System', user_avatar_url: null, content: 'Jordan Lee joined #general', type: 'system', thread_reply_count: 0, is_edited: false, is_deleted: false, pinned: false, reactions: {}, mentions: [], created_at: '2026-04-09T10:00:00Z', updated_at: '2026-04-09T10:00:00Z' },
+export const demoBookmarks: ChatBookmark[] = [
+  { id: 'bk-1', workspace_id: WS, user_id: 'user-1', message_id: 'msg-g-6', note: 'Redis fix reference', created_at: '2026-04-12T07:30:00Z' },
 ];
 
 export function getUserById(id: string): ChatUser | undefined {
