@@ -16,9 +16,22 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword.tsx"));
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user, loading, isEmbedded } = useAuth();
+  const { user, loading, isEmbedded, bridgeTimedOut } = useAuth();
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
-  // When embedded in GFunnel, allow access even without a session (demo mode fallback)
+  if (isEmbedded && bridgeTimedOut && !user) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen gap-3 text-center px-4">
+        <div className="text-2xl">⚠️</div>
+        <h2 className="text-lg font-semibold text-foreground">Connection timed out</h2>
+        <p className="text-sm text-muted-foreground max-w-md">
+          Unable to authenticate with the GFunnel platform. Please refresh the page or contact your workspace admin.
+        </p>
+        <button onClick={() => window.location.reload()} className="mt-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity">
+          Retry
+        </button>
+      </div>
+    );
+  }
   if (!user && !isEmbedded) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 }
