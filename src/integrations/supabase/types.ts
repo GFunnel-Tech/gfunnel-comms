@@ -470,6 +470,48 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_contacts: {
+        Row: {
+          channel_id: string
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          last_message_at: string | null
+          phone_number: string
+          updated_at: string
+          whatsapp_id: string | null
+          whatsapp_name: string | null
+          workspace_id: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean
+          last_message_at?: string | null
+          phone_number: string
+          updated_at?: string
+          whatsapp_id?: string | null
+          whatsapp_name?: string | null
+          workspace_id: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean
+          last_message_at?: string | null
+          phone_number?: string
+          updated_at?: string
+          whatsapp_id?: string | null
+          whatsapp_name?: string | null
+          workspace_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
