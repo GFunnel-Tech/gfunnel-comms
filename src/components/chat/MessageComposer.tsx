@@ -257,16 +257,26 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
           </div>
         )}
 
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={e => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder || defaultPlaceholder}
-          rows={1}
-          disabled={isSending}
-          className="w-full px-3 pt-3 pb-2 text-sm bg-transparent text-foreground placeholder:text-muted-foreground resize-none focus:outline-none disabled:opacity-50"
-        />
+        <div className="relative">
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder || defaultPlaceholder}
+            rows={1}
+            disabled={isSending}
+            className="w-full px-3 pt-3 pb-2 text-sm bg-transparent text-foreground placeholder:text-muted-foreground resize-none focus:outline-none disabled:opacity-50"
+          />
+          <MentionAutocomplete
+            users={users}
+            query={mentionQuery ?? ''}
+            anchorRect={mentionQuery !== null ? { top: 0, left: 0 } : null}
+            onSelect={handleMentionSelect}
+            onClose={() => setMentionQuery(null)}
+            visible={mentionQuery !== null}
+          />
+        </div>
 
         <div className="flex items-center justify-between px-2 pb-2">
           <div className="flex items-center gap-0.5 relative">
