@@ -347,12 +347,173 @@ const slackAdapter: ProviderAdapter = {
   },
 };
 
+// ─── Facebook Messenger Adapter ───
+
+const facebookAdapter: ProviderAdapter = {
+  provider: "facebook",
+
+  handleVerification(url: URL, integration: IntegrationRow | null) {
+    const mode = url.searchParams.get("hub.mode");
+    const token = url.searchParams.get("hub.verify_token");
+    const challenge = url.searchParams.get("hub.challenge");
+
+    const expectedToken = integration?.config?.verify_token || Deno.env.get("FACEBOOK_VERIFY_TOKEN");
+
+    if (mode === "subscribe" && token === expectedToken) {
+      console.log("Facebook Messenger webhook verified");
+      return new Response(challenge, { status: 200 });
+    }
+    return json({ error: "Verification failed" }, 403);
+  },
+
+  async verifyWebhook(req: Request, body: string, integration: IntegrationRow | null) {
+    const appSecret = Deno.env.get(
+      integration?.credentials_secret_name
+        ? `${integration.credentials_secret_name}_APP_SECRET`
+        : "FACEBOOK_APP_SECRET"
+    );
+
+    if (!appSecret) return true; // skip if not configured
+
+    const signature = req.headers.get("x-hub-signature-256");
+    if (!signature) return false;
+
+    const expectedSig = signature.replace("sha256=", "");
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw", encoder.encode(appSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+    );
+    const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(body));
+    const computed = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, "0")).join("");
+    return expectedSig === computed;
+  },
+
+  resolveIntegrationKey(body: any): string | null {
+    // Use page_id to resolve which integration this belongs to
+    const entry = body?.entry?.[0];
+    return entry?.id || null;
+  },
+
+  parseIncoming(body: any): NormalizedMessage[] {
+    const messages: NormalizedMessage[] = [];
+    for (const entry of body.entry || []) {
+      for (const event of entry.messaging || []) {
+        const senderId = event.sender?.id;
+        if (!senderId) continue;
+
+        // Skip echo messages (sent by the page itself)
+        if (event.message?.is_echo) continue;
+
+        let content = "";
+        let msgType: "text" | "image" | "file" = "text";
+
+        if (event.message) {
+          const msg = event.message;
+
+          if (msg.text) {
+            content = msg.text;
+          }
+
+          // Handle attachments
+          if (msg.attachments?.length) {
+            for (const att of msg.attachments) {
+              switch (att.type) {
+                case "image":
+                  content = content ? `${content}\n📷 Image` : "📷 Image";
+                  msgType = "image";
+                  break;
+                case "video":
+                  content = content ? `${content}\n🎥 Video` : "🎥 Video";
+                  msgType = "file";
+                  break;
+                case "audio":
+                  content = content ? `${content}\n🎵 Audio` : "🎵 Audio";
+                  msgType = "file";
+                  break;
+                case "file":
+                  content = content ? `${content}\n📎 File` : "📎 File";
+                  msgType = "file";
+                  break;
+                case "location":
+                  const coords = att.payload?.coordinates;
+                  content = coords
+                    ? `📍 Location: ${coords.lat}, ${coords.long}`
+                    : "📍 Location";
+                  break;
+                case "fallback":
+                  content = content || att.title || "[Unsupported attachment]";
+                  break;
+                default:
+                  content = content || `[${att.type} attachment]`;
+              }
+            }
+          }
+
+          // Handle quick reply
+          if (msg.quick_reply) {
+            content = content || `Quick reply: ${msg.quick_reply.payload}`;
+          }
+        } else if (event.postback) {
+          content = event.postback.title || event.postback.payload || "[Postback]";
+        } else if (event.referral) {
+          content = `Referral: ${event.referral.ref || event.referral.source || "unknown"}`;
+        } else {
+          continue; // Skip delivery/read receipts and other non-message events
+        }
+
+        if (!content) continue;
+
+        messages.push({
+          sender_id: senderId,
+          sender_name: senderId, // Messenger doesn't include name in webhook; resolved via profile API if needed
+          content,
+          type: msgType,
+          raw_metadata: {
+            facebook_sender_id: senderId,
+            facebook_recipient_id: event.recipient?.id,
+            facebook_message_id: event.message?.mid,
+            facebook_timestamp: event.timestamp,
+            facebook_page_id: entry.id,
+            facebook_attachments: event.message?.attachments?.map((a: any) => ({
+              type: a.type,
+              url: a.payload?.url,
+            })) || null,
+            facebook_postback: event.postback || null,
+            facebook_referral: event.referral || null,
+          },
+        });
+      }
+    }
+    return messages;
+  },
+
+  async sendMessage(integration: IntegrationRow, recipientId: string, content: string) {
+    const accessToken = Deno.env.get(
+      integration.credentials_secret_name || "FACEBOOK_PAGE_ACCESS_TOKEN"
+    );
+    if (!accessToken) { console.error("Facebook page access token not found"); return; }
+
+    const res = await fetch("https://graph.facebook.com/v21.0/me/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        recipient: { id: recipientId },
+        message: { text: content },
+        messaging_type: "RESPONSE",
+        access_token: accessToken,
+      }),
+    });
+    if (!res.ok) console.error("Facebook send failed:", await res.text());
+  },
+};
+
 // ─── Adapter Registry ───
 
 const adapters: Record<string, ProviderAdapter> = {
   whatsapp: whatsappAdapter,
   telegram: telegramAdapter,
   slack: slackAdapter,
+  facebook: facebookAdapter,
 };
 
 // ─── Router: Find or Create Contact + Channel ───
