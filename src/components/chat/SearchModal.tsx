@@ -4,8 +4,17 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Search, Hash, MessageSquare, User, Sparkles, Plus, FileDown } from 'lucide-react';
 import { format } from 'date-fns';
 
+function highlightText(text: string, query: string) {
+  if (!query.trim()) return text;
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const parts = text.split(regex);
+  return parts.map((part, i) =>
+    regex.test(part) ? <mark key={i} className="bg-primary/30 text-foreground rounded-sm px-0.5">{part}</mark> : part
+  );
+}
+
 export function SearchModal() {
-  const { searchOpen, setSearchOpen, searchQuery, setSearchQuery, channels, users, setActiveChannelId, allMessages, setRightPanel } = useChatContext();
+  const { searchOpen, setSearchOpen, searchQuery, setSearchQuery, channels, users, setActiveChannelId, allMessages, setRightPanel, setHighlightedMessageId, setJumpToMessageId } = useChatContext();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -110,14 +119,16 @@ export function SearchModal() {
                 const ch = channels.find(c => c.id === m.channel_id);
                 return (
                   <button key={m.id} className="w-full text-left px-2 py-2 rounded-md hover:bg-muted transition-colors"
-                    onClick={() => { setActiveChannelId(m.channel_id); setSearchOpen(false); setSearchQuery(''); }}>
+                    onClick={() => { setActiveChannelId(m.channel_id); setJumpToMessageId(m.id); setHighlightedMessageId(m.id); setSearchOpen(false); setSearchQuery(''); setTimeout(() => setHighlightedMessageId(null), 3000); }}>
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="text-xs font-semibold text-foreground">{m.user_display_name}</span>
                       <span className="text-[10px] text-muted-foreground">
                         in #{ch?.name} · {format(new Date(m.created_at), 'MMM d, h:mm a')}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">{m.content}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {highlightText(m.content, searchQuery)}
+                    </p>
                   </button>
                 );
               })}

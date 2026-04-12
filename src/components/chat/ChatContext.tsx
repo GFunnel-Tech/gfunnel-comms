@@ -51,6 +51,10 @@ interface ChatContextType {
   renameWorkspaceFolder: (folderId: string, newName: string) => void;
   hoveredMessageId: string | null;
   setHoveredMessageId: (id: string | null) => void;
+  highlightedMessageId: string | null;
+  setHighlightedMessageId: (id: string | null) => void;
+  jumpToMessageId: string | null;
+  setJumpToMessageId: (id: string | null) => void;
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);
@@ -147,6 +151,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [demoAllMessages, setDemoAllMessages] = useState<ChatMessage[]>(demoMessages);
   const [demoChannelList, setDemoChannelList] = useState<ChatChannel[]>(demoChannels);
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  const [jumpToMessageId, setJumpToMessageId] = useState<string | null>(null);
 
   // UI state
   const [activeChannelId, setActiveChannelIdRaw] = useState('ch-general');
@@ -390,6 +396,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       workspaces, activeWorkspaceId, activeWorkspaceName, switchWorkspace,
       reorderWorkspaces, workspaceFolders, createWorkspaceFolder, removeWorkspaceFromFolder, deleteWorkspaceFolder, renameWorkspaceFolder,
       hoveredMessageId, setHoveredMessageId,
+      highlightedMessageId, setHighlightedMessageId,
+      jumpToMessageId, setJumpToMessageId,
     }}>
       {children}
     </ChatContext.Provider>

@@ -15,7 +15,7 @@ interface MessageItemProps {
 }
 
 export function MessageItem({ message, isCompact }: MessageItemProps) {
-  const { currentUser, setThreadParentId, toggleReaction, users, allMessages, setHoveredMessageId } = useChatContext();
+  const { currentUser, setThreadParentId, toggleReaction, users, allMessages, setHoveredMessageId, highlightedMessageId } = useChatContext();
 
   if (message.type === 'system') {
     return (
@@ -45,12 +45,15 @@ export function MessageItem({ message, isCompact }: MessageItemProps) {
     .map(id => users.find(u => u.id === id))
     .filter(Boolean);
 
+  const isHighlighted = highlightedMessageId === message.id;
+
   return (
     <div
       className={cn(
         'group relative px-4 hover:bg-muted/30 transition-all duration-150',
         isAI && 'border-l-2 border-info bg-info/5',
         isAutomation && 'border-l-2 border-warning bg-warning/5',
+        isHighlighted && 'animate-pulse bg-primary/10 ring-1 ring-primary/30',
       )}
       onMouseEnter={() => setHoveredMessageId(message.id)}
       onMouseLeave={() => setHoveredMessageId(null)}
