@@ -8,6 +8,7 @@ import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Auth from "./pages/Auth.tsx";
 import { lazy, Suspense, ReactNode } from "react";
+import { BridgeDebugOverlay } from "@/components/chat/BridgeDebugOverlay";
 
 const ApiDocs = lazy(() => import("./pages/ApiDocs.tsx"));
 const IntegrationsAdmin = lazy(() => import("./pages/IntegrationsAdmin.tsx"));
@@ -67,6 +68,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          {import.meta.env.DEV && <BridgeDebugOverlay />}
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
