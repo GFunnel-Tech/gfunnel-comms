@@ -39,6 +39,26 @@ function getChannelIcon(type: string, emoji: string) {
   return <Hash className="w-3.5 h-3.5 shrink-0" />;
 }
 
+function AuthBadge() {
+  const { isEmbedded, user } = useAuth();
+  const label = isEmbedded ? 'GFunnel SSO' : user ? 'Standalone' : 'Not signed in';
+  const Icon = isEmbedded ? Link : UserCheck;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className={cn(
+          'inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px] font-medium leading-none shrink-0',
+          isEmbedded ? 'bg-accent/20 text-accent' : 'bg-primary/20 text-primary'
+        )}>
+          <Icon className="w-2.5 h-2.5" />
+          {isEmbedded ? 'SSO' : 'Direct'}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function ChatSidebar() {
   const { channels, activeChannelId, setActiveChannelId, currentUser, users, setSearchOpen, sidebarCollapsed, setSidebarCollapsed, setRightPanel, setMobileSidebarOpen, activeWorkspaceName, workspaces, activeWorkspaceId, switchWorkspace, createChannel, createDM } = useChatContext();
   const showRail = useMediaQuery('(min-width: 900px)');
