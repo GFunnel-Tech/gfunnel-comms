@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useChatContext } from './ChatContext';
-import { MessageSquare, Pin, FileText, Users, Plus, X, GripVertical, Settings2 } from 'lucide-react';
+import { useActiveTabContext } from './ChatLayout';
+import { MessageSquare, Pin, FileText, Users, Plus, X, Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,8 +50,8 @@ function saveTabsForChannel(channelId: string, tabs: ChannelTab[]) {
 
 export function ChannelTabBar() {
   const { activeChannelId } = useChatContext();
+  const { activeTab, setActiveTab } = useActiveTabContext();
   const [tabs, setTabs] = useState<ChannelTab[]>(() => getTabsForChannel(activeChannelId));
-  const [activeTab, setActiveTab] = useState('messages');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showManageDialog, setShowManageDialog] = useState(false);
   const [newTabName, setNewTabName] = useState('');
