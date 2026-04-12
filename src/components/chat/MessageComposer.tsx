@@ -5,6 +5,8 @@ import { Bold, Italic, Code, Paperclip, Smile, SendHorizonal, X, FileIcon, Loade
 import { cn } from '@/lib/utils';
 import { EmojiPicker } from './EmojiPicker';
 import { TypingIndicator } from './TypingIndicator';
+import { MentionAutocomplete } from './MentionAutocomplete';
+import type { ChatUser } from '@/data/chat-types';
 
 interface FilePreview {
   file: File;
