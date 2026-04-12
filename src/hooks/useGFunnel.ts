@@ -17,6 +17,9 @@ export function useGFunnel(moduleSlug: string) {
     context, isEmbedded, isReady: context !== null,
     workspaceId: context?.workspace_id ?? null,
     userId: context?.user_id ?? null,
+    userDisplayName: context?.user_display_name ?? 'You',
+    userAvatarUrl: context?.user_avatar_url ?? null,
+    authToken: context?.auth_token ?? null,
     theme: context?.theme ?? 'dark',
     config: context?.config ?? {},
   };

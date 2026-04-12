@@ -8,6 +8,7 @@ export interface GFunnelContext {
   config: Record<string, unknown>;
   gfunnel_supabase_url: string;
   gfunnel_supabase_anon_key: string;
+  auth_token: string | null;
 }
 
 type ContextListener = (ctx: GFunnelContext) => void;
@@ -52,6 +53,6 @@ export function notifyParent(title: string, body: string, variant: 'info' | 'suc
   window.parent.postMessage({ type: 'module:notify', payload: { title, body, variant } }, '*');
 }
 
-export function requestResize(height: number) {
-  window.parent.postMessage({ type: 'module:resize', payload: { height } }, '*');
+export function notifyUnreadCount(count: number) {
+  window.parent.postMessage({ type: 'module:unread', payload: { count } }, '*');
 }
