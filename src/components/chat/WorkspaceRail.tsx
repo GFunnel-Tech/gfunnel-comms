@@ -413,7 +413,7 @@ export function WorkspaceRail({
                   const ws = workspaces.find(w => w.workspace_id === wsId);
                   if (!ws) return null;
                   return (
-                    <span key={wsId} className="flex items-center gap-1.5 bg-accent rounded-md px-2 py-1 text-xs">
+                    <span key={wsId} className="flex items-center gap-1.5 bg-muted border border-border rounded-md px-2 py-1 text-xs text-foreground">
                       <span className="w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-white"
                         style={{ backgroundColor: ws.workspace_color }}>
                         {getInitials(ws.workspace_name)}
