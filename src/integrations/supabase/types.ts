@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_api_keys: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string
+          scopes: string[]
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name: string
+          scopes?: string[]
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string
+          scopes?: string[]
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       chat_channels: {
         Row: {
           created_at: string
@@ -82,6 +127,59 @@ export type Database = {
           workspace_id?: string
         }
         Relationships: []
+      }
+      chat_event_subscriptions: {
+        Row: {
+          api_key_id: string
+          callback_url: string
+          created_at: string
+          created_by: string
+          events: string[]
+          failure_count: number
+          id: string
+          is_active: boolean
+          last_delivered_at: string | null
+          signing_secret: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          api_key_id: string
+          callback_url: string
+          created_at?: string
+          created_by: string
+          events?: string[]
+          failure_count?: number
+          id?: string
+          is_active?: boolean
+          last_delivered_at?: string | null
+          signing_secret?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          api_key_id?: string
+          callback_url?: string
+          created_at?: string
+          created_by?: string
+          events?: string[]
+          failure_count?: number
+          id?: string
+          is_active?: boolean
+          last_delivered_at?: string | null
+          signing_secret?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_event_subscriptions_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "chat_api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chat_members: {
         Row: {
@@ -273,6 +371,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      chat_webhooks: {
+        Row: {
+          avatar_url: string | null
+          channel_id: string
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          last_triggered_at: string | null
+          name: string
+          token: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          channel_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          name: string
+          token?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          channel_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          name?: string
+          token?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_webhooks_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chat_workspace_connections: {
         Row: {
