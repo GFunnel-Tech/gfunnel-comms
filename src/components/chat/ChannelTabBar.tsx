@@ -249,9 +249,3 @@ export function ChannelTabBar() {
     </>
   );
 }
-
-/** Hook to check if the active tab is 'messages' (for conditional rendering of feed/composer) */
-export function useActiveTab() {
-  // This is a simplified approach — in a real app, this would be in context
-  return 'messages';
-}
