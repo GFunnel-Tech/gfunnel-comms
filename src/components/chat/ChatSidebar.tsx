@@ -1,7 +1,7 @@
 import { useChatContext } from './ChatContext';
 import { CreateChannelDialog } from './CreateChannelDialog';
 import { CreateDMDialog } from './CreateDMDialog';
-import { Hash, Lock, ChevronDown, ChevronRight, Search, Plus, MessageSquare, Settings, Menu, Star, Megaphone, Zap, ChevronsUpDown } from 'lucide-react';
+import { Hash, Lock, ChevronDown, ChevronRight, Search, Plus, MessageSquare, Settings, Menu, Star, Megaphone, Zap, ChevronsUpDown, Keyboard } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -239,6 +239,11 @@ export function ChatSidebar() {
             <p className="text-xs font-semibold text-foreground truncate">{currentUser.display_name}</p>
             <p className="text-[10px] text-sidebar-foreground truncate">{currentUser.status_text || currentUser.status}</p>
           </div>
+          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-sidebar-foreground"
+            onClick={() => window.dispatchEvent(new CustomEvent('open-keyboard-shortcuts'))}
+            title="Keyboard shortcuts">
+            <Keyboard className="w-3.5 h-3.5" />
+          </Button>
           <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-sidebar-foreground">
             <Settings className="w-3.5 h-3.5" />
           </Button>

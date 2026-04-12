@@ -51,8 +51,13 @@ export function KeyboardShortcutsDialog() {
         setOpen(prev => !prev);
       }
     };
+    const openHandler = () => setOpen(true);
     window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener('open-keyboard-shortcuts', openHandler);
+    return () => {
+      window.removeEventListener('keydown', handler);
+      window.removeEventListener('open-keyboard-shortcuts', openHandler);
+    };
   }, []);
 
   return (
