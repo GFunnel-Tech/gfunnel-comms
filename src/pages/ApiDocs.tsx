@@ -118,14 +118,14 @@ function TryItPanel({ config, globalApiKey }: { config: TryItConfig; globalApiKe
 
       {open && (
         <div className="px-4 pb-4 space-y-3 border-t border-primary/20">
-          {/* API Key */}
+          {/* API Key (override) */}
           <div className="pt-3">
-            <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">API Key</label>
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">API Key {globalApiKey && !localApiKey ? <span className="text-primary">(using global key)</span> : null}</label>
             <input
               type="text"
-              value={apiKey}
-              onChange={e => setApiKey(e.target.value)}
-              placeholder="gfc_your_api_key..."
+              value={localApiKey}
+              onChange={e => setLocalApiKey(e.target.value)}
+              placeholder={globalApiKey ? 'Using global key — override here' : 'gfc_your_api_key...'}
               className="w-full mt-1 px-3 py-1.5 text-xs font-mono bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
