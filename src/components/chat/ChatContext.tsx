@@ -227,12 +227,39 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }));
   }, [isLive, sb.toggleReaction]);
 
+  const createChannel = useCallback((data: { name: string; description: string; type: ChannelType; emoji: string }) => {
+    const now = new Date().toISOString();
+    const newChannel: ChatChannel = {
+      id: `ch-${Date.now()}`,
+      workspace_id: activeWorkspaceId,
+      name: data.name,
+      description: data.description || undefined,
+      type: data.type,
+      emoji: data.emoji || '#',
+      created_by: userId,
+      is_archived: false,
+      is_read_only: data.type === 'announcement',
+      member_ids: [userId],
+      pinned_message_ids: [],
+      message_count: 0,
+      sort_order: channels.length,
+      created_at: now,
+      updated_at: now,
+    };
+    if (isLive) {
+      // TODO: Supabase insert
+    } else {
+      setDemoChannelList(prev => [...prev, newChannel]);
+    }
+    setActiveChannelId(newChannel.id);
+  }, [activeWorkspaceId, userId, channels.length, isLive, setActiveChannelId]);
+
   return (
     <ChatContext.Provider value={{
       currentUser, users, channels,
       activeChannelId, setActiveChannelId, messages, allMessages,
       threadParentId, setThreadParentId: handleSetThreadParentId, threadReplies,
-      sendMessage, toggleReaction,
+      sendMessage, createChannel, toggleReaction,
       searchQuery, setSearchQuery, searchOpen, setSearchOpen,
       sidebarCollapsed, setSidebarCollapsed,
       mobileSidebarOpen, setMobileSidebarOpen,
