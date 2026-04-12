@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 
 const BASE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
+const GlobalApiKeyContext = createContext<string>('');
+
 type Section = 'overview' | 'auth' | 'channels' | 'messages' | 'webhooks' | 'events';
 
 function CopyButton({ text }: { text: string }) {
