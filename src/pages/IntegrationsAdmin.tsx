@@ -75,6 +75,15 @@ const PROVIDERS: { id: Provider; label: string; icon: React.ReactNode; color: st
     ],
   },
   {
+    id: 'slack', label: 'Slack', icon: <MessageSquare className="w-5 h-5" />, color: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+    description: 'Bidirectional Slack integration — receive and send messages via a custom Slack app.',
+    configFields: [
+      { key: 'team_id', label: 'Slack Team ID', placeholder: 'T0123456789' },
+      { key: 'bot_user_id', label: 'Bot User ID', placeholder: 'U0123456789' },
+      { key: 'app_id', label: 'App ID', placeholder: 'A0123456789' },
+    ],
+  },
+  {
     id: 'sms', label: 'SMS / Twilio', icon: <Radio className="w-5 h-5" />, color: 'bg-red-500/10 text-red-500 border-red-500/20',
     description: 'Send and receive SMS messages via Twilio or compatible providers.',
     configFields: [
