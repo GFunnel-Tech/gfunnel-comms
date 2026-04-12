@@ -4,6 +4,7 @@ import { demoChannels, demoMessages, demoUsers, currentDemoUser } from '@/data/c
 import { useGFunnel } from '@/hooks/useGFunnel';
 import { useSupabaseChat } from '@/hooks/useSupabaseChat';
 import { supabase } from '@/integrations/supabase/client';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 type RightPanel = 'none' | 'thread' | 'ai';
 
@@ -71,7 +72,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   // Auto-collapse sidebar on medium screens (768-1024px)
-  const isMediumScreen = useMediaQueryInline('(min-width: 768px) and (max-width: 1024px)');
+  const isMediumScreen = useMediaQuery('(min-width: 768px) and (max-width: 1024px)');
   const [sidebarCollapsed, setSidebarCollapsedRaw] = useState(false);
   const userOverrodeRef = useRef(false);
 
