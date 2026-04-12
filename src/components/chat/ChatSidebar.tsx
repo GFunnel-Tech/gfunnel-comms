@@ -34,7 +34,7 @@ function getChannelIcon(type: string, emoji: string) {
 }
 
 export function ChatSidebar() {
-  const { channels, activeChannelId, setActiveChannelId, currentUser, users, setSearchOpen, sidebarCollapsed, setSidebarCollapsed, setRightPanel } = useChatContext();
+  const { channels, activeChannelId, setActiveChannelId, currentUser, users, setSearchOpen, sidebarCollapsed, setSidebarCollapsed, setRightPanel, setMobileSidebarOpen } = useChatContext();
   const [starredOpen, setStarredOpen] = useState(true);
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
