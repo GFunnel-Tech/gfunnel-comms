@@ -14,6 +14,12 @@ export interface WorkspaceConnection {
   joined_at: string;
 }
 
+export interface WorkspaceFolder {
+  id: string;
+  name: string;
+  workspaceIds: string[];
+}
+
 export const demoWorkspaceConnections: WorkspaceConnection[] = [
   {
     id: 'wc-1',

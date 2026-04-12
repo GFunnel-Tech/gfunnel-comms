@@ -16,6 +16,7 @@ function ChatLayoutInner() {
   const {
     activeChannelId, rightPanel, mobileSidebarOpen, setMobileSidebarOpen, setRightPanel,
     workspaces, activeWorkspaceId, switchWorkspace,
+    reorderWorkspaces, workspaceFolders, createWorkspaceFolder, removeWorkspaceFromFolder, deleteWorkspaceFolder,
   } = useChatContext();
   const containerRef = useRef<HTMLDivElement>(null);
   const showRail = useMediaQuery('(min-width: 900px)');
@@ -37,6 +38,11 @@ function ChatLayoutInner() {
           workspaces={workspaces}
           activeWorkspaceId={activeWorkspaceId}
           onSwitch={switchWorkspace}
+          onReorder={reorderWorkspaces}
+          folders={workspaceFolders}
+          onCreateFolder={createWorkspaceFolder}
+          onRemoveFromFolder={removeWorkspaceFromFolder}
+          onDeleteFolder={deleteWorkspaceFolder}
         />
       )}
 
