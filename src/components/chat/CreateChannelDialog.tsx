@@ -33,7 +33,7 @@ export function CreateChannelDialog({ open, onOpenChange, onCreate }: CreateChan
       name: name.trim().toLowerCase().replace(/\s+/g, '-'),
       description: description.trim(),
       type,
-      emoji: emoji || '#',
+      emoji: emoji || (type === 'automation' ? '✨' : '#'),
     });
     setName('');
     setDescription('');
