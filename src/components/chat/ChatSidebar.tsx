@@ -1,7 +1,7 @@
 import { useChatContext } from './ChatContext';
 import { CreateChannelDialog } from './CreateChannelDialog';
 import { CreateDMDialog } from './CreateDMDialog';
-import { Hash, Lock, ChevronDown, ChevronRight, Search, Plus, MessageSquare, Settings, Menu, Star, Megaphone, Zap, ChevronsUpDown, Keyboard } from 'lucide-react';
+import { Hash, Lock, ChevronDown, ChevronRight, Search, Plus, MessageSquare, Settings, Menu, Star, Megaphone, Zap, ChevronsUpDown, Keyboard, Link, UserCheck } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -9,7 +9,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { cn } from '@/lib/utils';
 import { DEPARTMENT_COLORS, type Department } from '@/data/chat-types';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useAuth } from '@/hooks/useAuth';
 import { useState } from 'react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const statusColors: Record<string, string> = {
   online: 'bg-green-500',
@@ -236,7 +238,10 @@ export function ChatSidebar() {
             <span className={cn('absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-sidebar', statusColors[currentUser.status])} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-foreground truncate">{currentUser.display_name}</p>
+            <div className="flex items-center gap-1">
+              <p className="text-xs font-semibold text-foreground truncate">{currentUser.display_name}</p>
+              <AuthBadge />
+            </div>
             <p className="text-[10px] text-sidebar-foreground truncate">{currentUser.status_text || currentUser.status}</p>
           </div>
           <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-sidebar-foreground"
