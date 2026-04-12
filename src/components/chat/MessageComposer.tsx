@@ -27,6 +27,8 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
   const [showEmoji, setShowEmoji] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionStart, setMentionStart] = useState<number>(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounterRef = useRef(0);
