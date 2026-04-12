@@ -64,7 +64,16 @@ export function onContextChange(listener: ContextListener): () => void {
   return () => _listeners.delete(listener);
 }
 export function isInsideGFunnel(): boolean {
-  try { return window.self !== window.top; } catch { return true; }
+  try {
+    if (window.self === window.top) return false;
+    // Only treat as GFunnel embed if URL has ?gfunnel=1 or hash contains gfunnel
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('gfunnel') === '1') return true;
+    if (window.location.hash.includes('gfunnel')) return true;
+    // Also check window.name set by GFunnel parent
+    if (window.name === 'gfunnel-module') return true;
+    return false;
+  } catch { return true; }
 }
 export function notifyParent(title: string, body: string, variant: 'info' | 'success' | 'warning' | 'error' = 'info') {
   window.parent.postMessage({ type: 'module:notify', payload: { title, body, variant } }, '*');
