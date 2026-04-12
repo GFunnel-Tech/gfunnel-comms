@@ -362,7 +362,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       currentUser, users, channels,
       activeChannelId, setActiveChannelId, messages, allMessages,
       threadParentId, setThreadParentId: handleSetThreadParentId, threadReplies,
-      sendMessage, createChannel, toggleReaction, toggleStar, toggleMute,
+      sendMessage, createChannel, createDM, toggleReaction, toggleStar, toggleMute,
       searchQuery, setSearchQuery, searchOpen, setSearchOpen,
       sidebarCollapsed, setSidebarCollapsed,
       mobileSidebarOpen, setMobileSidebarOpen,
