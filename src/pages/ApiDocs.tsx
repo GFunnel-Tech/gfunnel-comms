@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Book, Key, Webhook, Radio, MessageSquare, Hash, Copy, Check, ChevronRight, ExternalLink, Code, Shield } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { Book, Key, Webhook, Radio, MessageSquare, Hash, Copy, Check, ChevronRight, ExternalLink, Code, Shield, Play, Loader2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
@@ -37,6 +37,173 @@ function EndpointRow({ method, path, desc }: { method: string; path: string; des
       <span className={cn('px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider', colors[method] || 'bg-muted text-muted-foreground')}>{method}</span>
       <code className="text-xs text-foreground font-mono">{path}</code>
       <span className="text-xs text-muted-foreground ml-auto hidden sm:block">{desc}</span>
+    </div>
+  );
+}
+
+/* ─── Try It Panel ─── */
+interface TryItConfig {
+  method: string;
+  path: string;
+  defaultHeaders?: Record<string, string>;
+  defaultBody?: string;
+  defaultQuery?: Record<string, string>;
+  description: string;
+}
+
+function TryItPanel({ config }: { config: TryItConfig }) {
+  const [open, setOpen] = useState(false);
+  const [apiKey, setApiKey] = useState('');
+  const [body, setBody] = useState(config.defaultBody || '');
+  const [queryParams, setQueryParams] = useState(
+    Object.entries(config.defaultQuery || {}).map(([k, v]) => `${k}=${v}`).join('&')
+  );
+  const [pathParams, setPathParams] = useState<Record<string, string>>({});
+  const [response, setResponse] = useState<{ status: number; body: string; time: number } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Extract path params like :id, :token
+  const paramMatches = config.path.match(/:(\w+)/g) || [];
+
+  const resolvedPath = paramMatches.reduce((p, match) => {
+    const key = match.slice(1);
+    return p.replace(match, pathParams[key] || match);
+  }, config.path);
+
+  const execute = useCallback(async () => {
+    setLoading(true);
+    setResponse(null);
+    const start = performance.now();
+    try {
+      const url = `${BASE_URL}${resolvedPath}${queryParams ? '?' + queryParams : ''}`;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '',
+      };
+      if (apiKey) headers['X-API-Key'] = apiKey;
+
+      const opts: RequestInit = { method: config.method, headers };
+      if (['POST', 'PATCH', 'PUT'].includes(config.method) && body) {
+        opts.body = body;
+      }
+
+      const res = await fetch(url, opts);
+      const text = await res.text();
+      let formatted = text;
+      try { formatted = JSON.stringify(JSON.parse(text), null, 2); } catch {}
+      setResponse({ status: res.status, body: formatted, time: Math.round(performance.now() - start) });
+    } catch (err: any) {
+      setResponse({ status: 0, body: `Network error: ${err.message}`, time: Math.round(performance.now() - start) });
+    }
+    setLoading(false);
+  }, [resolvedPath, queryParams, apiKey, body, config.method]);
+
+  const statusColor = response
+    ? response.status >= 200 && response.status < 300 ? 'text-green-400' 
+    : response.status >= 400 ? 'text-red-400' 
+    : 'text-yellow-400'
+    : '';
+
+  return (
+    <div className="my-4 rounded-lg border border-primary/30 bg-primary/5 overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+      >
+        <Play className="w-3.5 h-3.5" />
+        Try it — {config.description}
+        <ChevronDown className={cn('w-3.5 h-3.5 ml-auto transition-transform', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div className="px-4 pb-4 space-y-3 border-t border-primary/20">
+          {/* API Key */}
+          <div className="pt-3">
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">API Key</label>
+            <input
+              type="text"
+              value={apiKey}
+              onChange={e => setApiKey(e.target.value)}
+              placeholder="gfc_your_api_key..."
+              className="w-full mt-1 px-3 py-1.5 text-xs font-mono bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+
+          {/* Path params */}
+          {paramMatches.length > 0 && (
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Path Parameters</label>
+              <div className="space-y-1.5 mt-1">
+                {paramMatches.map(match => {
+                  const key = match.slice(1);
+                  return (
+                    <div key={key} className="flex items-center gap-2">
+                      <code className="text-[10px] text-primary w-16 shrink-0">:{key}</code>
+                      <input
+                        type="text"
+                        value={pathParams[key] || ''}
+                        onChange={e => setPathParams(prev => ({ ...prev, [key]: e.target.value }))}
+                        placeholder={`Enter ${key}...`}
+                        className="flex-1 px-3 py-1.5 text-xs font-mono bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Query params */}
+          {(config.defaultQuery || config.method === 'GET') && (
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Query Parameters</label>
+              <input
+                type="text"
+                value={queryParams}
+                onChange={e => setQueryParams(e.target.value)}
+                placeholder="workspace_id=ws-acme&limit=50"
+                className="w-full mt-1 px-3 py-1.5 text-xs font-mono bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          )}
+
+          {/* Body */}
+          {['POST', 'PATCH', 'PUT'].includes(config.method) && (
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Request Body (JSON)</label>
+              <textarea
+                value={body}
+                onChange={e => setBody(e.target.value)}
+                rows={Math.min(body.split('\n').length + 1, 10)}
+                className="w-full mt-1 px-3 py-2 text-xs font-mono bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary resize-y"
+              />
+            </div>
+          )}
+
+          {/* Execute button */}
+          <div className="flex items-center gap-3">
+            <Button size="sm" onClick={execute} disabled={loading} className="gap-1.5">
+              {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+              Send Request
+            </Button>
+            <span className="text-[10px] text-muted-foreground font-mono">
+              {config.method} {BASE_URL}{resolvedPath}{queryParams ? '?' + queryParams : ''}
+            </span>
+          </div>
+
+          {/* Response */}
+          {response && (
+            <div className="rounded-lg bg-[#1e1e2e] border border-border overflow-hidden">
+              <div className="flex items-center gap-3 px-3 py-1.5 border-b border-border/50">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Response</span>
+                <span className={cn('text-xs font-bold font-mono', statusColor)}>{response.status || 'ERR'}</span>
+                <span className="text-[10px] text-muted-foreground ml-auto">{response.time}ms</span>
+              </div>
+              <pre className="p-3 text-xs text-green-300 overflow-x-auto max-h-64"><code>{response.body}</code></pre>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -183,6 +350,19 @@ function ChannelsSection() {
       <h3 className="text-sm font-semibold mb-2">List Channels</h3>
       <CodeBlock code={`curl -H "X-API-Key: gfc_..." \\
   "${BASE_URL}/chat-api/channels?workspace_id=ws-acme"`} />
+      <TryItPanel config={{
+        method: 'GET',
+        path: '/chat-api/channels',
+        defaultQuery: { workspace_id: 'ws-acme' },
+        description: 'List channels',
+      }} />
+
+      <h3 className="text-sm font-semibold mt-6 mb-2">Get Channel</h3>
+      <TryItPanel config={{
+        method: 'GET',
+        path: '/chat-api/channels/:id',
+        description: 'Get a single channel',
+      }} />
 
       <h3 className="text-sm font-semibold mt-6 mb-2">Create Channel</h3>
       <CodeBlock lang="json" code={`{
@@ -192,10 +372,22 @@ function ChannelsSection() {
   "workspace_id": "ws-acme",
   "emoji": "⚙️"
 }`} />
+      <TryItPanel config={{
+        method: 'POST',
+        path: '/chat-api/channels',
+        defaultBody: JSON.stringify({ name: 'test-channel', description: 'Created from API docs', type: 'public', workspace_id: 'ws-acme', emoji: '🧪' }, null, 2),
+        description: 'Create a channel',
+      }} />
 
       <h3 className="text-sm font-semibold mt-6 mb-2">List Messages (with pagination)</h3>
       <CodeBlock code={`curl -H "X-API-Key: gfc_..." \\
   "${BASE_URL}/chat-api/channels/<channel-id>/messages?limit=50&before=2025-01-15T10:00:00Z"`} />
+      <TryItPanel config={{
+        method: 'GET',
+        path: '/chat-api/channels/:id/messages',
+        defaultQuery: { limit: '20' },
+        description: 'List messages in a channel',
+      }} />
     </div>
   );
 }
@@ -214,12 +406,23 @@ function MessagesSection() {
   "workspace_id": "ws-acme",
   "content": "Hello from the API! 🤖"
 }`} />
+      <TryItPanel config={{
+        method: 'POST',
+        path: '/chat-api/messages',
+        defaultBody: JSON.stringify({ channel_id: '', workspace_id: 'ws-acme', content: 'Hello from the API docs! 🧪' }, null, 2),
+        description: 'Send a message',
+      }} />
 
       <h3 className="text-sm font-semibold mt-6 mb-2">Toggle Reaction</h3>
       <CodeBlock lang="json" code={`POST /chat-api/messages/<id>/reactions
 
 { "emoji": "👍" }`} />
-      <p className="text-xs text-muted-foreground">Adds if not present, removes if already reacted.</p>
+      <TryItPanel config={{
+        method: 'POST',
+        path: '/chat-api/messages/:id/reactions',
+        defaultBody: JSON.stringify({ emoji: '👍' }, null, 2),
+        description: 'Toggle a reaction',
+      }} />
 
       <h3 className="text-sm font-semibold mt-6 mb-2">Reply in Thread</h3>
       <CodeBlock lang="json" code={`POST /chat-api/messages/<parent-id>/thread
@@ -228,6 +431,27 @@ function MessagesSection() {
   "content": "Great point!",
   "workspace_id": "ws-acme"
 }`} />
+      <TryItPanel config={{
+        method: 'POST',
+        path: '/chat-api/messages/:id/thread',
+        defaultBody: JSON.stringify({ content: 'Great point!', workspace_id: 'ws-acme' }, null, 2),
+        description: 'Reply in a thread',
+      }} />
+
+      <h3 className="text-sm font-semibold mt-6 mb-2">Edit Message</h3>
+      <TryItPanel config={{
+        method: 'PATCH',
+        path: '/chat-api/messages/:id',
+        defaultBody: JSON.stringify({ content: 'Updated message content' }, null, 2),
+        description: 'Edit a message',
+      }} />
+
+      <h3 className="text-sm font-semibold mt-6 mb-2">Delete Message</h3>
+      <TryItPanel config={{
+        method: 'DELETE',
+        path: '/chat-api/messages/:id',
+        description: 'Delete a message',
+      }} />
     </div>
   );
 }
@@ -246,6 +470,12 @@ function WebhooksSection() {
   "channel_id": "uuid",
   "workspace_id": "ws-acme"
 }`} />
+      <TryItPanel config={{
+        method: 'POST',
+        path: '/chat-api/webhooks',
+        defaultBody: JSON.stringify({ name: 'Test Webhook', channel_id: '', workspace_id: 'ws-acme' }, null, 2),
+        description: 'Create a webhook',
+      }} />
       <p className="text-xs text-muted-foreground mb-4">Response includes a <code className="bg-muted px-1 rounded">webhook_url</code> — save it, the token won't be shown again.</p>
 
       <h3 className="text-sm font-semibold mb-2">2. Post via Webhook (no auth needed)</h3>
@@ -253,6 +483,12 @@ function WebhooksSection() {
   -H "Content-Type: application/json" \\
   -d '{"text": "Build #142 passed ✅", "username": "CI Bot"}' \\
   "${BASE_URL}/chat-webhooks/<token>"`} />
+      <TryItPanel config={{
+        method: 'POST',
+        path: '/chat-webhooks/:token',
+        defaultBody: JSON.stringify({ text: 'Build #142 passed ✅', username: 'CI Bot', icon_url: '' }, null, 2),
+        description: 'Post via webhook',
+      }} />
 
       <h4 className="text-sm font-semibold mt-4 mb-2">Slack-Compatible Fields</h4>
       <div className="rounded border border-border text-xs">
@@ -278,7 +514,14 @@ function EventsSection() {
         ))}
       </div>
 
-      <h3 className="text-sm font-semibold mb-2">Create Subscription</h3>
+      <h3 className="text-sm font-semibold mb-2">List Event Types</h3>
+      <TryItPanel config={{
+        method: 'GET',
+        path: '/chat-events',
+        description: 'List all event types',
+      }} />
+
+      <h3 className="text-sm font-semibold mt-6 mb-2">Create Subscription</h3>
       <CodeBlock lang="json" code={`POST /chat-api/events
 
 {
@@ -287,6 +530,12 @@ function EventsSection() {
   "callback_url": "https://your-server.com/gfunnel-events",
   "events": ["message.created", "reaction.added"]
 }`} />
+      <TryItPanel config={{
+        method: 'POST',
+        path: '/chat-api/events',
+        defaultBody: JSON.stringify({ workspace_id: 'ws-acme', api_key_id: '', callback_url: 'https://example.com/events', events: ['message.created'] }, null, 2),
+        description: 'Subscribe to events',
+      }} />
 
       <h3 className="text-sm font-semibold mt-6 mb-2">Signature Verification</h3>
       <p className="text-xs text-muted-foreground mb-2">Every event includes an HMAC-SHA256 signature:</p>
