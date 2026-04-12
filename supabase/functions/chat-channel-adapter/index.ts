@@ -569,6 +569,21 @@ Deno.serve(async (req) => {
     let body: any;
     try { body = JSON.parse(bodyText); } catch { return json({ error: "Invalid JSON" }, 400); }
 
+    // Slack url_verification challenge (must respond before signature check)
+    if (body.type === "url_verification" && body.challenge) {
+      return new Response(JSON.stringify({ challenge: body.challenge }), {
+        status: 200,
+        headers: { ...corsHeaders },
+      });
+    }
+
+    // Slack event_callback retry prevention
+    const retryNum = req.headers.get("x-slack-retry-num");
+    if (retryNum) {
+      console.log(`Skipping Slack retry #${retryNum}`);
+      return json({ ok: true });
+    }
+
     const integration = await resolveIntegration(supabase, providerName, adapter, body, resolvedIntegrationId);
 
     // Verify webhook signature
