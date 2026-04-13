@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { getSupabaseClient } from '@/lib/supabase-context';
 import type { SlashCommand } from '@/components/chat/SlashCommandAutocomplete';
 
 interface ExecuteOptions {
@@ -43,7 +43,7 @@ export function useSlashCommands() {
         sendMessage(`🤖 /ai ${args}`, channelId);
 
         try {
-          const { data, error } = await supabase.functions.invoke('chat-ai', {
+          const { data, error } = await getSupabaseClient().functions.invoke('chat-ai', {
             body: { 
               messages: [{ role: 'user', content: args }],
               channelId,

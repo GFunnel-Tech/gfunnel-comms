@@ -2,6 +2,7 @@ export interface GFunnelContext {
   workspace_id: string;
   workspace_name: string;
   workspace_type: string;
+  org_slug?: string;
   user_id: string;
   user_display_name: string;
   user_email: string;
@@ -75,8 +76,8 @@ export function isInsideGFunnel(): boolean {
 export function notifyParent(title: string, body: string, variant: 'info' | 'success' | 'warning' | 'error' = 'info') {
   window.parent.postMessage({ type: 'module:notify', payload: { title, body, variant } }, '*');
 }
-export function notifyUnreadCount(count: number) {
-  window.parent.postMessage({ type: 'module:unread', payload: { count } }, '*');
+export function notifyUnreadCount(count: number, hasMention: boolean = false): void {
+  window.parent.postMessage({ type: 'module:unread', payload: { count, has_mention: hasMention } }, '*');
 }
 export function notifyNavigation(path: string) {
   window.parent.postMessage({ type: 'module:navigate', payload: { path } }, '*');

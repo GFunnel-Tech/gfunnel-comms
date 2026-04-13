@@ -4,9 +4,11 @@ import type { AIEmployee } from '@/data/chat-types';
 import { demoChannels, demoMessages, demoUsers, currentDemoUser, demoAIEmployees } from '@/data/chat-demo-data';
 import { useGFunnel } from '@/hooks/useGFunnel';
 import { useSupabaseChat } from '@/hooks/useSupabaseChat';
-import { supabase } from '@/integrations/supabase/client';
+import { getSupabaseClient } from '@/lib/supabase-context';
+import { setSupabaseClient } from '@/lib/supabase-context';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { demoWorkspaceConnections, type WorkspaceConnection, type WorkspaceFolder } from '@/data/workspace-data';
+import type { WorkspaceInfo } from '@/lib/gfunnel-bridge';
 
 type RightPanel = 'none' | 'thread' | 'ai';
 
@@ -77,11 +79,25 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const gfunnel = useGFunnel('chat');
 
   const [supabaseUser, setSupabaseUser] = useState<{ id: string; email?: string } | null>(null);
+
+  // CHANGE 1: When embedded, initialize the dynamic Supabase client with bridge-provided credentials
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    if (!gfunnel.isReady) return;
+    if (gfunnel.isEmbedded && gfunnel.context?.gfunnel_supabase_url && gfunnel.context?.gfunnel_supabase_anon_key) {
+      setSupabaseClient(gfunnel.context.gfunnel_supabase_url, gfunnel.context.gfunnel_supabase_anon_key);
+    }
+    if (gfunnel.authToken) {
+      const client = getSupabaseClient();
+      client.auth.setSession({ access_token: gfunnel.authToken, refresh_token: '' });
+    }
+  }, [gfunnel.isReady, gfunnel.isEmbedded, gfunnel.context, gfunnel.authToken]);
+
+  useEffect(() => {
+    const client = getSupabaseClient();
+    client.auth.getUser().then(({ data }) => {
       if (data.user) setSupabaseUser({ id: data.user.id, email: data.user.email ?? undefined });
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setSupabaseUser({ id: session.user.id, email: session.user.email ?? undefined });
       } else {
@@ -91,11 +107,34 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // CHANGE 2: When bridge sends gfunnel:workspaces, populate workspace list
   useEffect(() => {
-    if (gfunnel.authToken) {
-      supabase.auth.setSession({ access_token: gfunnel.authToken, refresh_token: '' });
-    }
-  }, [gfunnel.authToken]);
+    if (!gfunnel.isEmbedded) return;
+    const handler = (event: MessageEvent) => {
+      const data = event.data;
+      if (data?.type !== 'gfunnel:workspaces') return;
+      const platformWorkspaces: WorkspaceConnection[] = (data.payload.workspaces as WorkspaceInfo[]).map(
+        (ws: WorkspaceInfo, idx: number) => ({
+          id: `wc-${ws.id}`,
+          user_id: userId ?? '',
+          workspace_id: ws.id,
+          workspace_name: ws.name,
+          workspace_type: ws.type,
+          workspace_logo_url: ws.logo_url,
+          workspace_color: ws.color,
+          sort_order: idx,
+          total_unread: 0,
+          has_mention: false,
+          last_active_at: new Date().toISOString(),
+          is_active: true,
+          joined_at: new Date().toISOString(),
+        })
+      );
+      setWorkspaces(platformWorkspaces);
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [gfunnel.isEmbedded]);
 
   const isEmbeddedLive = gfunnel.isEmbedded && !!gfunnel.authToken;
   const isLive = isEmbeddedLive || !!supabaseUser;
@@ -381,7 +420,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   // AI Employees
   const loadAIEmployees = useCallback(async () => {
     if (!workspaceId || workspaceId === 'demo-workspace') return;
-    const { data } = await supabase
+    const client = getSupabaseClient();
+    const { data } = await client
       .from('chat_ai_employees')
       .select('*')
       .eq('workspace_id', workspaceId)
