@@ -49,7 +49,6 @@ function PublicOnlyRoute({ children }: { children: ReactNode }) {
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
   if (user && !bridgeTimedOut) return <Navigate to="/" replace />;
   return <>{children}</>;
-  return <>{children}</>;
 }
 
 const Loading = () => <div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>;
