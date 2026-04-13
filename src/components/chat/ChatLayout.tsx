@@ -7,6 +7,7 @@ import { MessageFeed } from './MessageFeed';
 import { MessageComposer } from './MessageComposer';
 import { ThreadPanel } from './ThreadPanel';
 import { AIPanel } from './AIPanel';
+import { AIEmployeeProfilePanel } from './AIEmployeeProfilePanel';
 import { SearchModal } from './SearchModal';
 import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog';
 import { WorkspaceRail } from './WorkspaceRail';
@@ -20,6 +21,7 @@ function ChatLayoutInner() {
     activeChannelId, rightPanel, mobileSidebarOpen, setMobileSidebarOpen, setRightPanel,
     workspaces, activeWorkspaceId, switchWorkspace,
     reorderWorkspaces, workspaceFolders, createWorkspaceFolder, removeWorkspaceFromFolder, deleteWorkspaceFolder, renameWorkspaceFolder,
+    activeAIEmployeeProfile, setActiveAIEmployeeProfile, openAIDM,
   } = useChatContext();
   const containerRef = useRef<HTMLDivElement>(null);
   const showRail = useMediaQuery('(min-width: 900px)');
@@ -89,6 +91,22 @@ function ChatLayoutInner() {
         {rightPanel === 'ai' && (
           <div className="fixed inset-y-0 right-0 z-30 w-80 lg:relative lg:z-auto">
             <AIPanel />
+          </div>
+        )}
+
+        {activeAIEmployeeProfile && (
+          <div className="fixed inset-y-0 right-0 z-30 w-80 lg:relative lg:z-auto">
+            <AIEmployeeProfilePanel
+              employee={activeAIEmployeeProfile}
+              onClose={() => setActiveAIEmployeeProfile(null)}
+              onMessage={(emp) => {
+                setActiveAIEmployeeProfile(null);
+                openAIDM(emp);
+              }}
+              onEdit={(emp) => {
+                setActiveAIEmployeeProfile(null);
+              }}
+            />
           </div>
         )}
 

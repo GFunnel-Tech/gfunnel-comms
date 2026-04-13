@@ -1,4 +1,5 @@
 import { ChatUser, ChatChannel, ChatMessage, ChatBookmark } from './chat-types';
+import type { AIEmployee } from './chat-types';
 
 const WS = 'demo-workspace';
 const ALL_MEMBERS = ['user-1','user-2','user-3','user-4','user-5'];
@@ -212,3 +213,46 @@ export function getThreadReplies(parentId: string): ChatMessage[] {
     .filter(m => m.thread_parent_id === parentId)
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 }
+
+export const demoAIEmployees: AIEmployee[] = [
+  {
+    id: 'ai-emp-aria',
+    workspace_id: 'demo-workspace',
+    name: 'Aria',
+    role: 'Revenue Analyst',
+    department: 'Revenue Generation',
+    avatar_color: '#F97316',
+    personality: 'analytical',
+    expertise_summary: 'Sales funnels, lead scoring, pipeline analysis, revenue forecasting',
+    system_prompt: 'You are Aria, a Revenue Analyst at Acme Corp. You are analytical and data-driven. Your expertise: sales funnels, lead scoring, pipeline analysis, and revenue forecasting. Be specific and actionable. Keep responses concise unless asked for detail.',
+    assigned_channel_ids: ['ch-general', 'ch-revenue'],
+    respond_to_mentions: true,
+    respond_to_dms: true,
+    scheduled_tasks: [],
+    message_count: 42,
+    is_active: true,
+    created_by: 'user-1',
+    created_at: '2026-04-01T10:00:00Z',
+    updated_at: '2026-04-01T10:00:00Z',
+  },
+  {
+    id: 'ai-emp-marcus',
+    workspace_id: 'demo-workspace',
+    name: 'Marcus',
+    role: 'Operations Manager',
+    department: 'Operations',
+    avatar_color: '#06B6D4',
+    personality: 'direct',
+    expertise_summary: 'Process optimization, team workflows, project coordination, efficiency analysis',
+    system_prompt: 'You are Marcus, an Operations Manager at Acme Corp. You are direct and concise. Your expertise: process optimization, team workflows, project coordination. Get straight to the point. No fluff.',
+    assigned_channel_ids: ['ch-general', 'ch-tech'],
+    respond_to_mentions: true,
+    respond_to_dms: true,
+    scheduled_tasks: [],
+    message_count: 28,
+    is_active: true,
+    created_by: 'user-1',
+    created_at: '2026-04-02T10:00:00Z',
+    updated_at: '2026-04-02T10:00:00Z',
+  },
+];

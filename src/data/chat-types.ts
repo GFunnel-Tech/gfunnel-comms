@@ -103,3 +103,54 @@ export interface ChatBookmark {
   note?: string;
   created_at: string;
 }
+
+export type AIEmployeePersonality =
+  | 'professional'
+  | 'friendly'
+  | 'analytical'
+  | 'creative'
+  | 'direct';
+
+export interface AIEmployee {
+  id: string;
+  workspace_id: string;
+  name: string;
+  role: string;
+  department: Department;
+  avatar_color: string;
+  personality: AIEmployeePersonality;
+  expertise_summary: string;
+  system_prompt: string;
+  assigned_channel_ids: string[];
+  respond_to_mentions: boolean;
+  respond_to_dms: boolean;
+  scheduled_tasks: ScheduledTask[];
+  message_count: number;
+  is_active: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ScheduledTask {
+  id: string;
+  cron: string;
+  channel_id: string;
+  prompt: string;
+  last_run: string | null;
+  is_active: boolean;
+}
+
+export interface AIEmployeeFormData {
+  name: string;
+  role: string;
+  department: Department;
+  avatar_color: string;
+  personality: AIEmployeePersonality;
+  expertise_summary: string;
+  response_length: 'concise' | 'balanced' | 'detailed';
+  assigned_channel_ids: string[];
+  respond_to_mentions: boolean;
+  respond_to_dms: boolean;
+  scheduled_tasks: Omit<ScheduledTask, 'id' | 'last_run'>[];
+}
