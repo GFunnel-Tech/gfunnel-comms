@@ -1,7 +1,8 @@
 import { useChatContext } from './ChatContext';
 import { CreateChannelDialog } from './CreateChannelDialog';
 import { CreateDMDialog } from './CreateDMDialog';
-import { Hash, Lock, ChevronDown, ChevronRight, Search, Plus, MessageSquare, Settings, Menu, Star, Megaphone, Zap, ChevronsUpDown, Keyboard, Link, UserCheck } from 'lucide-react';
+import { Hash, Lock, ChevronDown, ChevronRight, Search, Plus, MessageSquare, Settings, Menu, Star, Megaphone, Zap, ChevronsUpDown, Keyboard, Link, UserCheck, Bot } from 'lucide-react';
+import { HireAIEmployeeDialog } from './HireAIEmployeeDialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -60,13 +61,15 @@ function AuthBadge() {
 }
 
 export function ChatSidebar() {
-  const { channels, activeChannelId, setActiveChannelId, currentUser, users, setSearchOpen, sidebarCollapsed, setSidebarCollapsed, setRightPanel, setMobileSidebarOpen, activeWorkspaceName, workspaces, activeWorkspaceId, switchWorkspace, createChannel, createDM } = useChatContext();
+  const { channels, activeChannelId, setActiveChannelId, currentUser, users, setSearchOpen, sidebarCollapsed, setSidebarCollapsed, setRightPanel, setMobileSidebarOpen, activeWorkspaceName, workspaces, activeWorkspaceId, switchWorkspace, createChannel, createDM, aiEmployees, addAIEmployee, setActiveAIEmployeeProfile, openAIDM } = useChatContext();
   const showRail = useMediaQuery('(min-width: 900px)');
   const [starredOpen, setStarredOpen] = useState(true);
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [createDMOpen, setCreateDMOpen] = useState(false);
+  const [aiTeamOpen, setAITeamOpen] = useState(true);
+  const [hireOpen, setHireOpen] = useState(false);
 
   const starredChannels = channels.filter(c => c.is_starred);
   const publicChannels = channels.filter(c => c.type !== 'dm' && c.type !== 'group_dm' && !c.is_starred);
@@ -243,6 +246,66 @@ export function ChatSidebar() {
               );
             })}
           </div>
+
+          {/* AI TEAM */}
+          <div className="mt-2">
+            <div className="flex items-center justify-between px-2 mb-1">
+              <button className="flex items-center gap-1" onClick={() => setAITeamOpen(!aiTeamOpen)}>
+                {aiTeamOpen
+                  ? <ChevronDown className="w-3 h-3 text-sidebar-foreground" />
+                  : <ChevronRight className="w-3 h-3 text-sidebar-foreground" />}
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/80">
+                  AI Team
+                </span>
+              </button>
+              <Button variant="ghost" size="icon" className="h-5 w-5 text-sidebar-foreground"
+                onClick={() => setHireOpen(true)}
+                title="Hire AI Employee">
+                <Plus className="w-3 h-3" />
+              </Button>
+            </div>
+
+            {aiTeamOpen && (
+              <>
+                {aiEmployees.length === 0 ? (
+                  <button
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors border border-dashed border-sidebar-border/50 mx-1"
+                    style={{ width: 'calc(100% - 8px)' }}
+                    onClick={() => setHireOpen(true)}>
+                    <Bot className="w-3.5 h-3.5 shrink-0" />
+                    <span className="text-xs">Hire an AI employee</span>
+                  </button>
+                ) : (
+                  aiEmployees.map(emp => (
+                    <button key={emp.id}
+                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all border-l-2 border-transparent"
+                      onClick={() => openAIDM(emp)}>
+                      <div className="relative shrink-0">
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                          style={{ backgroundColor: emp.avatar_color }}>
+                          {emp.name.charAt(0)}
+                        </div>
+                        <span className="absolute -bottom-0.5 -right-0.5 text-[8px] leading-none">⚡</span>
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className="text-xs font-medium truncate">{emp.name}</p>
+                        <p className="text-[10px] text-sidebar-foreground/50 truncate">{emp.role}</p>
+                      </div>
+                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                    </button>
+                  ))
+                )}
+                {aiEmployees.length > 0 && (
+                  <button
+                    className="w-full flex items-center gap-2 px-2 py-1 text-[11px] text-sidebar-foreground/40 hover:text-sidebar-foreground transition-colors"
+                    onClick={() => setHireOpen(true)}>
+                    <Plus className="w-3 h-3" />
+                    Hire AI Employee
+                  </button>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </ScrollArea>
 
@@ -276,6 +339,19 @@ export function ChatSidebar() {
       </div>
       <CreateChannelDialog open={createOpen} onOpenChange={setCreateOpen} onCreate={createChannel} />
       <CreateDMDialog open={createDMOpen} onOpenChange={setCreateDMOpen} users={users} currentUserId={currentUser.id} onCreateDM={createDM} />
+      <HireAIEmployeeDialog
+        open={hireOpen}
+        onOpenChange={setHireOpen}
+        channels={channels}
+        workspaceName={activeWorkspaceName}
+        workspaceId={activeWorkspaceId}
+        currentUserId={currentUser.id}
+        onHired={(emp) => {
+          addAIEmployee(emp);
+          setHireOpen(false);
+          openAIDM(emp);
+        }}
+      />
     </div>
   );
 }

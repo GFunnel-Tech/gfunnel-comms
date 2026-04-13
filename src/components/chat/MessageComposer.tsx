@@ -11,6 +11,8 @@ import { useSlashCommands } from '@/hooks/useSlashCommands';
 import type { ChatUser } from '@/data/chat-types';
 import type { SlashCommand } from './SlashCommandAutocomplete';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import type { AIEmployee } from '@/data/chat-types';
 
 interface FilePreview {
   file: File;
@@ -25,7 +27,7 @@ interface MessageComposerProps {
 }
 
 export function MessageComposer({ channelId, threadParentId, placeholder }: MessageComposerProps) {
-  const { sendMessage, channels, users, currentUser, setRightPanel } = useChatContext();
+  const { sendMessage, channels, users, currentUser, setRightPanel, aiEmployees, allMessages } = useChatContext();
   const { execute: executeSlashCommand } = useSlashCommands();
   const [value, setValue] = useState('');
   const [files, setFiles] = useState<FilePreview[]>([]);
@@ -74,6 +76,67 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
     });
   }, []);
 
+  const triggerAIEmployeeResponses = useCallback(async (
+    content: string,
+    targetChannelId: string,
+    employees: AIEmployee[],
+  ) => {
+    const mentionedEmployees = employees.filter(emp =>
+      content.toLowerCase().includes(`@${emp.name.toLowerCase()}`)
+    );
+
+    const recentMessages = allMessages
+      .filter(m => m.channel_id === targetChannelId && !m.thread_parent_id)
+      .slice(-20);
+
+    for (const employee of mentionedEmployees) {
+      if (!employee.respond_to_mentions) continue;
+
+      const contextMessages = recentMessages.map(m => ({
+        role: m.user_id === employee.id ? 'assistant' as const : 'user' as const,
+        content: `${m.user_display_name}: ${m.content}`
+      }));
+
+      try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1000,
+            system: employee.system_prompt,
+            messages: [
+              ...contextMessages,
+              { role: 'user', content }
+            ],
+          }),
+        });
+
+        const data = await response.json();
+        const responseText = data.content?.[0]?.text ?? '';
+
+        if (responseText) {
+          await supabase.from('chat_messages').insert({
+            workspace_id: employee.workspace_id,
+            channel_id: targetChannelId,
+            user_id: employee.id,
+            user_display_name: employee.name,
+            content: responseText,
+            type: 'ai',
+            source: 'ai',
+            metadata: {
+              ai_employee_id: employee.id,
+              ai_employee_role: employee.role,
+              model: 'claude-sonnet-4-20250514'
+            }
+          });
+        }
+      } catch (err) {
+        console.error(`AI employee ${employee.name} response failed:`, err);
+      }
+    }
+  }, [allMessages]);
+
   const handleSend = async () => {
     const trimmed = value.trim();
     if ((!trimmed && files.length === 0) || isSending) return;
@@ -116,6 +179,12 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
       const content = trimmed || (files.length > 0 ? files.map(f => f.file.name).join(', ') : '');
 
       await sendMessage(content, channelId, threadParentId, fileObjects);
+
+      // Trigger AI employee responses for @mentions
+      if (aiEmployees.length > 0 && content) {
+        triggerAIEmployeeResponses(content, channelId, aiEmployees);
+      }
+
       setValue('');
       setFiles([]);
       textareaRef.current?.focus();

@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { WorkspaceConnection, WorkspaceFolder } from '@/data/workspace-data';
+import { requestWorkspaceList, type WorkspaceInfo } from '@/lib/gfunnel-bridge';
 
 interface WorkspaceRailProps {
   workspaces: WorkspaceConnection[];
@@ -239,6 +240,8 @@ export function WorkspaceRail({
   const [folderPrompt, setFolderPrompt] = useState<{ wsIdA: string; wsIdB: string } | null>(null);
   const [folderName, setFolderName] = useState('');
   const dragSourceRef = useRef<string | null>(null);
+  const [addWorkspaceOpen, setAddWorkspaceOpen] = useState(false);
+  const [availableWorkspaces, setAvailableWorkspaces] = useState<WorkspaceInfo[]>([]);
 
   // Which workspace IDs are inside folders
   const folderedIds = new Set(folders.flatMap(f => f.workspaceIds));
@@ -384,7 +387,13 @@ export function WorkspaceRail({
         <Tooltip>
           <TooltipTrigger asChild>
             <button className="w-10 h-10 rounded-xl border-2 border-dashed flex items-center justify-center transition-all hover:rounded-lg hover:border-primary hover:text-primary"
-              style={{ borderColor: 'hsl(var(--rail-foreground) / 0.3)', color: 'hsl(var(--rail-foreground) / 0.5)' }}>
+              style={{ borderColor: 'hsl(var(--rail-foreground) / 0.3)', color: 'hsl(var(--rail-foreground) / 0.5)' }}
+              onClick={() => {
+                requestWorkspaceList((ws) => {
+                  setAvailableWorkspaces(ws);
+                  setAddWorkspaceOpen(true);
+                });
+              }}>
               <Plus className="w-5 h-5" />
             </button>
           </TooltipTrigger>
@@ -393,6 +402,61 @@ export function WorkspaceRail({
           </TooltipContent>
         </Tooltip>
       </div>
+
+      {/* Add workspace dialog */}
+      <Dialog open={addWorkspaceOpen} onOpenChange={setAddWorkspaceOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-heading flex items-center gap-2">
+              Connect a Workspace
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <p className="text-sm text-muted-foreground">
+              Connect to another GFunnel workspace to access its channels from this window.
+            </p>
+            {availableWorkspaces.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No additional workspaces found.
+              </p>
+            ) : (
+              availableWorkspaces.map(ws => {
+                const alreadyConnected = workspaces.some(w => w.workspace_id === ws.id);
+                return (
+                  <div key={ws.id}
+                    className="flex items-center gap-3 p-2 rounded-lg border border-border">
+                    <span className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white shrink-0"
+                      style={{ backgroundColor: ws.color }}>
+                      {ws.name.charAt(0).toUpperCase()}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{ws.name}</p>
+                      <p className="text-xs text-muted-foreground">{ws.type}</p>
+                    </div>
+                    {alreadyConnected ? (
+                      <span className="text-xs text-muted-foreground">Connected</span>
+                    ) : (
+                      <Button size="sm" variant="outline" className="text-xs h-7"
+                        onClick={() => {
+                          window.parent.postMessage({
+                            type: 'module:connect_workspace',
+                            payload: { workspace_id: ws.id, workspace_name: ws.name, workspace_color: ws.color }
+                          }, '*');
+                          setAddWorkspaceOpen(false);
+                        }}>
+                        Connect
+                      </Button>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAddWorkspaceOpen(false)}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Create folder dialog */}
       <Dialog open={!!folderPrompt} onOpenChange={open => { if (!open) { setFolderPrompt(null); setFolderName(''); } }}>

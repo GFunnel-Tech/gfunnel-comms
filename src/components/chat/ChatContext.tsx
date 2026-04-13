@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { ChatChannel, ChatMessage, ChatUser, ChannelType } from '@/data/chat-types';
-import { demoChannels, demoMessages, demoUsers, currentDemoUser } from '@/data/chat-demo-data';
+import type { AIEmployee } from '@/data/chat-types';
+import { demoChannels, demoMessages, demoUsers, currentDemoUser, demoAIEmployees } from '@/data/chat-demo-data';
 import { useGFunnel } from '@/hooks/useGFunnel';
 import { useSupabaseChat } from '@/hooks/useSupabaseChat';
 import { supabase } from '@/integrations/supabase/client';
@@ -55,6 +56,13 @@ interface ChatContextType {
   setHighlightedMessageId: (id: string | null) => void;
   jumpToMessageId: string | null;
   setJumpToMessageId: (id: string | null) => void;
+  // AI Employees
+  aiEmployees: AIEmployee[];
+  loadAIEmployees: () => Promise<void>;
+  addAIEmployee: (employee: AIEmployee) => void;
+  activeAIEmployeeProfile: AIEmployee | null;
+  setActiveAIEmployeeProfile: (emp: AIEmployee | null) => void;
+  openAIDM: (employee: AIEmployee) => void;
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);
@@ -146,6 +154,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     : (supabaseUser?.id ?? currentDemoUser.id);
 
   const sb = useSupabaseChat(isLive ? workspaceId : '', isLive ? userId : '');
+
+  // AI Employees state
+  const [aiEmployees, setAIEmployees] = useState<AIEmployee[]>(demoAIEmployees);
+  const [activeAIEmployeeProfile, setActiveAIEmployeeProfile] = useState<AIEmployee | null>(null);
 
   // Demo mode state
   const [demoAllMessages, setDemoAllMessages] = useState<ChatMessage[]>(demoMessages);
@@ -366,6 +378,41 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isLive]);
 
+  // AI Employees
+  const loadAIEmployees = useCallback(async () => {
+    if (!workspaceId || workspaceId === 'demo-workspace') return;
+    const { data } = await supabase
+      .from('chat_ai_employees')
+      .select('*')
+      .eq('workspace_id', workspaceId)
+      .eq('is_active', true)
+      .order('created_at');
+    if (data) setAIEmployees(data as AIEmployee[]);
+  }, [workspaceId]);
+
+  const addAIEmployee = useCallback((employee: AIEmployee) => {
+    setAIEmployees(prev => [...prev, employee]);
+  }, []);
+
+  const openAIDM = useCallback(async (employee: AIEmployee) => {
+    const existingDM = channels.find(ch =>
+      ch.type === 'dm' &&
+      ch.member_ids.includes(employee.id)
+    );
+    if (existingDM) {
+      setActiveChannelId(existingDM.id);
+      return;
+    }
+    createDM([employee.id]);
+  }, [channels, createDM, setActiveChannelId]);
+
+  // Load AI employees when workspace changes
+  useEffect(() => {
+    if (isLive) {
+      loadAIEmployees();
+    }
+  }, [isLive, loadAIEmployees]);
+
   // Keyboard shortcut: R to reply to hovered message
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -398,6 +445,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       hoveredMessageId, setHoveredMessageId,
       highlightedMessageId, setHighlightedMessageId,
       jumpToMessageId, setJumpToMessageId,
+      aiEmployees, loadAIEmployees, addAIEmployee,
+      activeAIEmployeeProfile, setActiveAIEmployeeProfile,
+      openAIDM,
     }}>
       {children}
     </ChatContext.Provider>

@@ -14,21 +14,81 @@ export function AIPanel() {
 
   const channel = channels.find(c => c.id === activeChannelId);
 
-  const handleAsk = () => {
-    if (!query.trim()) return;
+  const handleAsk = async () => {
+    if (!query.trim() || loading) return;
     const q = query.trim();
-    setMessages(prev => [...prev, { role: 'user', content: q }]);
+    const newMessages = [...messages, { role: 'user' as const, content: q }];
+    setMessages(newMessages);
     setQuery('');
     setLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    // Build conversation history for API
+    const apiMessages = newMessages.map(m => ({
+      role: m.role === 'ai' ? 'assistant' as const : 'user' as const,
+      content: m.content
+    }));
+
+    // Build system prompt with channel context
+    const channelContext = channel
+      ? `Current channel: #${channel.name}${channel.description ? ` — ${channel.description}` : ''}`
+      : '';
+
+    const systemPrompt = `You are GFunnel AI, a business assistant integrated into GFunnel Chat.
+${channelContext}
+You help with business strategy, operations, sales, marketing, and team communication.
+Be direct, concise, and action-oriented.`;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: apiMessages,
+          stream: true,
+        }),
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      // Add empty AI message to stream into
+      setMessages(prev => [...prev, { role: 'ai', content: '' }]);
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.type === 'content_block_delta' && data.delta?.text) {
+              fullText += data.delta.text;
+              setMessages(prev => {
+                const updated = [...prev];
+                updated[updated.length - 1] = { role: 'ai', content: fullText };
+                return updated;
+              });
+            }
+          } catch { /* skip malformed chunks */ }
+        }
+      }
+    } catch {
       setMessages(prev => [...prev, {
         role: 'ai',
-        content: `Based on the recent activity in #${channel?.name}, here's what I found:\n\n**Summary:** The team has been focused on shipping the Q2 dashboard updates, resolving a Redis caching issue, and preparing for the AI Assistant module launch next week.\n\n**Key Action Items:**\n• Review the design system docs at /docs/design\n• Test the AI Assistant on staging\n• Follow up on the Meta Ads campaign budget increase`
+        content: 'Sorry, I encountered an error. Please try again.'
       }]);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (

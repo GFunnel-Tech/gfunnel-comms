@@ -48,6 +48,12 @@ export function initGFunnelBridge(moduleSlug: string) {
         console.info('[GFunnel Bridge] Config update:', JSON.stringify(data.payload?.config ?? {}).slice(0, 200));
         if (_context) { _context.config = { ..._context.config, ...data.payload.config }; _listeners.forEach((fn) => fn(_context!)); }
         break;
+      case 'gfunnel:workspaces':
+        if (_workspacesCallback) {
+          _workspacesCallback(data.payload.workspaces as WorkspaceInfo[]);
+          _workspacesCallback = null;
+        }
+        break;
       default:
         console.warn('[GFunnel Bridge] Unhandled gfunnel event:', data.type);
     }
@@ -64,16 +70,7 @@ export function onContextChange(listener: ContextListener): () => void {
   return () => _listeners.delete(listener);
 }
 export function isInsideGFunnel(): boolean {
-  try {
-    if (window.self === window.top) return false;
-    // Only treat as GFunnel embed if URL has ?gfunnel=1 or hash contains gfunnel
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('gfunnel') === '1') return true;
-    if (window.location.hash.includes('gfunnel')) return true;
-    // Also check window.name set by GFunnel parent
-    if (window.name === 'gfunnel-module') return true;
-    return false;
-  } catch { return true; }
+  try { return window.self !== window.top; } catch { return true; }
 }
 export function notifyParent(title: string, body: string, variant: 'info' | 'success' | 'warning' | 'error' = 'info') {
   window.parent.postMessage({ type: 'module:notify', payload: { title, body, variant } }, '*');
@@ -83,4 +80,29 @@ export function notifyUnreadCount(count: number) {
 }
 export function notifyNavigation(path: string) {
   window.parent.postMessage({ type: 'module:navigate', payload: { path } }, '*');
+}
+
+// Workspace list request/response
+let _workspacesCallback: ((workspaces: WorkspaceInfo[]) => void) | null = null;
+
+export interface WorkspaceInfo {
+  id: string;
+  name: string;
+  type: 'personal' | 'org';
+  logo_url: string | null;
+  color: string;
+}
+
+export function requestWorkspaceList(
+  callback: (workspaces: WorkspaceInfo[]) => void
+): void {
+  _workspacesCallback = callback;
+  window.parent.postMessage({ type: 'module:request_workspaces' }, '*');
+}
+
+export function notifyWorkspaceSwitch(workspaceId: string, workspaceName: string): void {
+  window.parent.postMessage({
+    type: 'module:workspace_switch',
+    payload: { workspace_id: workspaceId, workspace_name: workspaceName }
+  }, '*');
 }
