@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { getSupabaseClient } from '@/lib/supabase-context';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -117,7 +117,7 @@ export default function IntegrationsAdmin() {
   const { data: integrations = [], isLoading } = useQuery({
     queryKey: ['channel-integrations'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabaseClient()
         .from('channel_integrations')
         .select('*')
         .eq('workspace_id', WORKSPACE_ID)
@@ -129,9 +129,9 @@ export default function IntegrationsAdmin() {
 
   const createMutation = useMutation({
     mutationFn: async (input: { provider: Provider; display_name: string; config: Record<string, string>; credentials_secret_name: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await getSupabaseClient().auth.getUser();
       if (!user) throw new Error('Not authenticated');
-      const { error } = await supabase.from('channel_integrations').insert({
+      const { error } = await getSupabaseClient().from('channel_integrations').insert({
         workspace_id: WORKSPACE_ID,
         provider: input.provider,
         display_name: input.display_name,
@@ -151,7 +151,7 @@ export default function IntegrationsAdmin() {
 
   const updateMutation = useMutation({
     mutationFn: async (input: { id: string; display_name: string; config: Record<string, string>; credentials_secret_name: string }) => {
-      const { error } = await supabase.from('channel_integrations').update({
+      const { error } = await getSupabaseClient().from('channel_integrations').update({
         display_name: input.display_name,
         config: input.config,
         credentials_secret_name: input.credentials_secret_name || null,
@@ -168,7 +168,7 @@ export default function IntegrationsAdmin() {
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase.from('channel_integrations').update({ is_active }).eq('id', id);
+      const { error } = await getSupabaseClient().from('channel_integrations').update({ is_active }).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -179,7 +179,7 @@ export default function IntegrationsAdmin() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('channel_integrations').delete().eq('id', id);
+      const { error } = await getSupabaseClient().from('channel_integrations').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {

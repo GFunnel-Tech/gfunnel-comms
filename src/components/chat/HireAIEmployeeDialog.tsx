@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bot, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
+import { getSupabaseClient } from '@/lib/supabase-context';
 import { generateSystemPrompt } from '@/lib/generate-system-prompt';
 import type { ChatChannel, AIEmployee, AIEmployeeFormData, AIEmployeePersonality, Department } from '@/data/chat-types';
 
@@ -122,7 +122,7 @@ export function HireAIEmployeeDialog({
         created_by: currentUserId,
       };
 
-      const { data, error } = await supabase
+      const { data, error } = await getSupabaseClient()
         .from('chat_ai_employees')
         .insert(insertData)
         .select()

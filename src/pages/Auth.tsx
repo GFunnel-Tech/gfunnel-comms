@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase-context";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,7 @@ export default function Auth() {
     setLoading(true);
 
     if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await getSupabaseClient().auth.signInWithPassword({ email, password });
       if (error) {
         toast.error(error.message);
       } else {
@@ -30,7 +30,7 @@ export default function Auth() {
         navigate("/");
       }
     } else {
-      const { error } = await supabase.auth.signUp({
+      const { error } = await getSupabaseClient().auth.signUp({
         email,
         password,
         options: {
@@ -64,7 +64,7 @@ export default function Auth() {
       toast.error("Enter your email first");
       return;
     }
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await getSupabaseClient().auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     if (error) {

@@ -11,7 +11,7 @@ import { useSlashCommands } from '@/hooks/useSlashCommands';
 import type { ChatUser } from '@/data/chat-types';
 import type { SlashCommand } from './SlashCommandAutocomplete';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { getSupabaseClient } from '@/lib/supabase-context';
 import type { AIEmployee } from '@/data/chat-types';
 
 interface FilePreview {
@@ -116,7 +116,7 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
         const responseText = data.content?.[0]?.text ?? '';
 
         if (responseText) {
-          await supabase.from('chat_messages').insert({
+          await getSupabaseClient().from('chat_messages').insert({
             workspace_id: employee.workspace_id,
             channel_id: targetChannelId,
             user_id: employee.id,

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { getSupabaseClient } from '@/lib/supabase-context';
+import { createPlatformNotification } from '@/lib/notify-platform';
 import type { ChatChannel, ChatMessage } from '@/data/chat-types';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -90,7 +91,8 @@ async function uploadFile(file: File, workspaceId: string, channelId: string): P
   const ext = file.name.split('.').pop() ?? '';
   const path = `${workspaceId}/${channelId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-  const { error } = await supabase.storage.from('chat-files').upload(path, file, {
+  const client = getSupabaseClient();
+  const { error } = await client.storage.from('chat-files').upload(path, file, {
     cacheControl: '3600',
     upsert: false,
   });
@@ -99,7 +101,7 @@ async function uploadFile(file: File, workspaceId: string, channelId: string): P
     return null;
   }
 
-  const { data: urlData } = supabase.storage.from('chat-files').getPublicUrl(path);
+  const { data: urlData } = client.storage.from('chat-files').getPublicUrl(path);
 
   return {
     url: urlData.publicUrl,
@@ -118,7 +120,8 @@ export function useSupabaseChat(workspaceId: string, userId: string) {
 
   // Load channels with membership info
   const loadChannels = useCallback(async () => {
-    const { data: memberData } = await supabase
+    const client = getSupabaseClient();
+    const { data: memberData } = await client
       .from('chat_members')
       .select('channel_id, unread_count, is_starred')
       .eq('user_id', userId);
@@ -127,7 +130,7 @@ export function useSupabaseChat(workspaceId: string, userId: string) {
       (memberData ?? []).map(m => [m.channel_id, m])
     );
 
-    const { data: channelData } = await supabase
+    const { data: channelData } = await client
       .from('chat_channels')
       .select('*')
       .eq('workspace_id', workspaceId)
@@ -140,7 +143,8 @@ export function useSupabaseChat(workspaceId: string, userId: string) {
 
   // Load messages for a channel
   const loadMessages = useCallback(async (channelId: string) => {
-    const { data } = await supabase
+    const client = getSupabaseClient();
+    const { data } = await client
       .from('chat_messages')
       .select('*')
       .eq('channel_id', channelId)
@@ -169,11 +173,12 @@ export function useSupabaseChat(workspaceId: string, userId: string) {
       fileData = await uploadFile(files[0], workspaceId, channelId);
     }
 
+    const client = getSupabaseClient();
     const msgType = fileData
       ? (fileData.type.startsWith('image/') ? 'image' : 'file')
       : 'text';
 
-    const { error } = await supabase.from('chat_messages').insert({
+    const { error } = await client.from('chat_messages').insert({
       workspace_id: workspaceId,
       channel_id: channelId,
       user_id: userId,
@@ -194,7 +199,7 @@ export function useSupabaseChat(workspaceId: string, userId: string) {
       for (let i = 1; i < files.length; i++) {
         const fd = await uploadFile(files[i], workspaceId, channelId);
         if (fd) {
-          await supabase.from('chat_messages').insert({
+          await client.from('chat_messages').insert({
             workspace_id: workspaceId,
             channel_id: channelId,
             user_id: userId,
@@ -215,7 +220,7 @@ export function useSupabaseChat(workspaceId: string, userId: string) {
     if (threadParentId) {
       const parent = allMessages.find(m => m.id === threadParentId);
       if (parent) {
-        await supabase.from('chat_messages').update({
+        await client.from('chat_messages').update({
           thread_reply_count: parent.thread_reply_count + 1,
           thread_last_reply_at: new Date().toISOString(),
           thread_participant_ids: [...new Set([...(parent.thread_participant_ids || []), userId])],
@@ -224,11 +229,25 @@ export function useSupabaseChat(workspaceId: string, userId: string) {
     }
 
     // Update channel last_message
-    await supabase.from('chat_channels').update({
+    await client.from('chat_channels').update({
       last_message_at: new Date().toISOString(),
       last_message_preview: content.slice(0, 100),
       message_count: (channels.find(c => c.id === channelId)?.message_count ?? 0) + 1,
     }).eq('id', channelId);
+
+    // CHANGE 4: Create platform notification for DMs sent to human users
+    const dmChannel = channels.find(c => c.id === channelId);
+    if (dmChannel && (dmChannel.type === 'dm' || dmChannel.type === 'group_dm')) {
+      const recipientIds = dmChannel.member_ids.filter(id => id !== userId);
+      for (const recipientId of recipientIds) {
+        createPlatformNotification({
+          recipientUserId: recipientId,
+          type: 'message',
+          title: `${dmChannel.name || 'Someone'} sent you a message`,
+          body: content.slice(0, 100),
+        });
+      }
+    }
   }, [workspaceId, userId, allMessages, channels]);
 
   // Toggle reaction
@@ -251,12 +270,12 @@ export function useSupabaseChat(workspaceId: string, userId: string) {
     // Optimistic update
     setAllMessages(prev => prev.map(m => m.id === messageId ? { ...m, reactions } : m));
 
-    await supabase.from('chat_messages').update({ reactions }).eq('id', messageId);
+    await getSupabaseClient().from('chat_messages').update({ reactions }).eq('id', messageId);
   }, [allMessages, userId]);
 
   // Update presence
   const updatePresence = useCallback(async (status: 'online' | 'away' | 'dnd' | 'offline') => {
-    await supabase.from('chat_presence').upsert({
+    await getSupabaseClient().from('chat_presence').upsert({
       user_id: userId,
       status,
       last_seen_at: new Date().toISOString(),
@@ -267,7 +286,8 @@ export function useSupabaseChat(workspaceId: string, userId: string) {
   useEffect(() => {
     if (!workspaceId) return;
 
-    const msgChannel = supabase
+    const client = getSupabaseClient();
+    const msgChannel = client
       .channel('chat-messages-realtime')
       .on('postgres_changes', {
         event: '*',
@@ -281,6 +301,16 @@ export function useSupabaseChat(workspaceId: string, userId: string) {
             if (prev.some(m => m.id === newMsg.id)) return prev;
             return [...prev, newMsg];
           });
+
+          // CHANGE 4: Create platform notification when message mentions current user
+          if (newMsg.mentions?.includes(userId) && newMsg.user_id !== userId) {
+            createPlatformNotification({
+              recipientUserId: userId,
+              type: 'mention',
+              title: `${newMsg.user_display_name || 'Someone'} mentioned you`,
+              body: newMsg.content.slice(0, 100),
+            });
+          }
         } else if (payload.eventType === 'UPDATE') {
           const updated = dbMsgToChat(payload.new as DbMessage);
           setAllMessages(prev => prev.map(m => m.id === updated.id ? updated : m));
@@ -291,7 +321,7 @@ export function useSupabaseChat(workspaceId: string, userId: string) {
       })
       .subscribe();
 
-    const chChannel = supabase
+    const chChannel = client
       .channel('chat-channels-realtime')
       .on('postgres_changes', {
         event: '*',
@@ -307,14 +337,14 @@ export function useSupabaseChat(workspaceId: string, userId: string) {
       .subscribe();
 
     subscriptionsRef.current = [
-      () => supabase.removeChannel(msgChannel),
-      () => supabase.removeChannel(chChannel),
+      () => client.removeChannel(msgChannel),
+      () => client.removeChannel(chChannel),
     ];
 
     return () => {
       subscriptionsRef.current.forEach(unsub => unsub());
     };
-  }, [workspaceId]);
+  }, [workspaceId, userId]);
 
   // Initial load
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase-context";
 import { isInsideGFunnel, onContextChange } from "@/lib/gfunnel-bridge";
 
 interface AuthContextType {
@@ -29,14 +29,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [bridgeTimedOut, setBridgeTimedOut] = useState(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const client = getSupabaseClient();
+    const { data: { subscription } } = client.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
         setLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    client.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (!session && isEmbedded) return;
       setLoading(false);
@@ -59,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setBridgeTimedOut(false);
         if (ctx.auth_token) {
           try {
-            const { error } = await supabase.auth.setSession({
+            const { error } = await getSupabaseClient().auth.setSession({
               access_token: ctx.auth_token,
               refresh_token: '',
             });
@@ -89,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isEmbedded]);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await getSupabaseClient().auth.signOut();
   };
 
   return (

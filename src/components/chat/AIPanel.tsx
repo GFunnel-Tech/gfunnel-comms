@@ -3,9 +3,10 @@ import { useChatContext } from './ChatContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Sparkles, X, Send, Loader2 } from 'lucide-react';
+import { getGFunnelContext } from '@/lib/gfunnel-bridge';
 
 export function AIPanel() {
-  const { rightPanel, setRightPanel, channels, activeChannelId } = useChatContext();
+  const { rightPanel, setRightPanel, channels, activeChannelId, activeWorkspaceName } = useChatContext();
   const [query, setQuery] = useState('');
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([]);
   const [loading, setLoading] = useState(false);
@@ -28,15 +29,19 @@ export function AIPanel() {
       content: m.content
     }));
 
-    // Build system prompt with channel context
-    const channelContext = channel
-      ? `Current channel: #${channel.name}${channel.description ? ` — ${channel.description}` : ''}`
-      : '';
+    // Build system prompt with real workspace context from bridge
+    const gfunnelCtx = getGFunnelContext();
+    const workspaceName = gfunnelCtx?.workspace_name ?? activeWorkspaceName ?? 'your workspace';
+    const workspaceType = gfunnelCtx?.workspace_type ?? 'personal';
 
     const systemPrompt = `You are GFunnel AI, a business assistant integrated into GFunnel Chat.
-${channelContext}
-You help with business strategy, operations, sales, marketing, and team communication.
-Be direct, concise, and action-oriented.`;
+Current workspace: ${workspaceName} (${workspaceType})
+Current channel: #${channel?.name ?? 'general'}
+${channel?.description ? `Channel description: ${channel.description}` : ''}
+${channel?.department ? `Department: ${channel.department}` : ''}
+
+You help with business strategy, operations, sales, marketing, and team communication
+within GFunnel's nine-department framework. Be direct, concise, and action-oriented.`;
 
     try {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -115,7 +120,7 @@ Be direct, concise, and action-oriented.`;
               </label>
               <label className="flex items-center gap-2 text-foreground/70">
                 <input type="checkbox" defaultChecked className="rounded" />
-                Workspace: Acme Corp
+                Workspace: {getGFunnelContext()?.workspace_name ?? activeWorkspaceName}
               </label>
               <label className="flex items-center gap-2 text-muted-foreground">
                 <input type="checkbox" className="rounded" />
