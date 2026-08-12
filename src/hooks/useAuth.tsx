@@ -24,7 +24,10 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isEmbedded] = useState(() => isInsideGFunnel());
+  // Auto-login via the GFunnel bridge is temporarily disabled for demo purposes.
+  // Set this back to `isInsideGFunnel()` to re-enable SSO auto-login.
+  const AUTO_LOGIN_ENABLED = false;
+  const [isEmbedded] = useState(() => (AUTO_LOGIN_ENABLED ? isInsideGFunnel() : false));
 
   const [bridgeTimedOut, setBridgeTimedOut] = useState(false);
 
