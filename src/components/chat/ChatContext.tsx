@@ -427,7 +427,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       .eq('workspace_id', workspaceId)
       .eq('is_active', true)
       .order('created_at');
-    if (data) setAIEmployees(data as AIEmployee[]);
+    if (data) setAIEmployees(data as unknown as AIEmployee[]);
   }, [workspaceId]);
 
   const addAIEmployee = useCallback((employee: AIEmployee) => {

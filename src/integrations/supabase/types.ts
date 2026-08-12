@@ -113,6 +113,69 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_ai_employees: {
+        Row: {
+          assigned_channel_ids: string[]
+          avatar_color: string
+          created_at: string
+          created_by: string
+          department: string
+          expertise_summary: string
+          id: string
+          is_active: boolean
+          message_count: number
+          name: string
+          personality: string
+          respond_to_dms: boolean
+          respond_to_mentions: boolean
+          role: string
+          scheduled_tasks: Json
+          system_prompt: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          assigned_channel_ids?: string[]
+          avatar_color?: string
+          created_at?: string
+          created_by: string
+          department: string
+          expertise_summary?: string
+          id?: string
+          is_active?: boolean
+          message_count?: number
+          name: string
+          personality?: string
+          respond_to_dms?: boolean
+          respond_to_mentions?: boolean
+          role: string
+          scheduled_tasks?: Json
+          system_prompt?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          assigned_channel_ids?: string[]
+          avatar_color?: string
+          created_at?: string
+          created_by?: string
+          department?: string
+          expertise_summary?: string
+          id?: string
+          is_active?: boolean
+          message_count?: number
+          name?: string
+          personality?: string
+          respond_to_dms?: boolean
+          respond_to_mentions?: boolean
+          role?: string
+          scheduled_tasks?: Json
+          system_prompt?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       chat_api_keys: {
         Row: {
           created_at: string
