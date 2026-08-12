@@ -120,12 +120,12 @@ export function MessageComposer({ channelId, threadParentId, placeholder }: Mess
             workspace_id: employee.workspace_id,
             channel_id: targetChannelId,
             user_id: employee.id,
-            user_display_name: employee.name,
             content: responseText,
             type: 'ai',
             source: 'ai',
             metadata: {
               ai_employee_id: employee.id,
+              ai_employee_name: employee.name,
               ai_employee_role: employee.role,
               model: 'claude-sonnet-4-20250514'
             }
