@@ -143,7 +143,7 @@ export function HireAIEmployeeDialog({
         assigned_channel_ids: data.assigned_channel_ids ?? [],
         respond_to_mentions: data.respond_to_mentions ?? true,
         respond_to_dms: data.respond_to_dms ?? true,
-        scheduled_tasks: (data.scheduled_tasks as AIEmployee['scheduled_tasks']) ?? [],
+        scheduled_tasks: (data.scheduled_tasks as unknown as AIEmployee['scheduled_tasks']) ?? [],
         message_count: data.message_count ?? 0,
         is_active: data.is_active ?? true,
         created_by: data.created_by,
